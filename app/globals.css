@@ -7,15 +7,144 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* > * {
+  font-family: var(--font-gip) !important;
+  font-size: 14px;
+  user-select: none;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-weight: 500;
+}
+
+.ant-input-affix-wrapper {
+  border-radius: 12px;
+  padding: 6px 14px;
+  width: 280px;
+}
+
+.ant-input-affix-wrapper.home {
+  border-radius: 12px;
+  padding: 4px 14px;
+  width: 100%;
+}
+
+@media (max-width: 639px) {
+  .ant-input-affix-wrapper.home {
+    width: 160px;
+  }
+}
+
+.ant-btn-variant-outlined:not(:disabled):not(.ant-btn-disabled):hover {
+  background: #ed1c45;
+  color: white;
+  border-color: none;
+}
+
+.back.ant-btn-variant-outlined:not(:disabled):not(.ant-btn-disabled):hover {
+  background: #e3e3e3;
+  color: black;
+  border-color: #e3e3e3;
+}
+
+.button-2.ant-btn-variant-outlined:not(:disabled):not(.ant-btn-disabled):hover {
+  background-color: white;
+  color: #ed1c45;
+  border-color: #ed1c45;
+}
+
+.ant-select-selector {
+  padding: 16px !important;
+  border-radius: 12px !important;
+}
+
+.ant-select .ant-select-arrow {
+  color: black;
+}
+
+.ant-select-single.ant-select-show-arrow .ant-select-selection-placeholder {
+  padding-inline-end: 45px;
+}
+
+@media (max-width: 639px) {
+  .ant-select-single.ant-select-show-arrow .ant-select-selection-placeholder {
+    padding-inline-end: 20px;
+  }
+}
+
+.ant-select-single .ant-select-selector .ant-select-prefix {
+  padding-inline-end: 7px;
+}
+
+.fnp.ant-form-item {
+  margin-bottom: 0px;
+}
+
+.ant-divider-horizontal {
+  margin: 12px 0px;
+}
+
+.clps.ant-divider-horizontal {
+  margin: 0px 0px 12px 0px;
+}
+
+.ant-collapse-item > .ant-collapse-header {
+  padding: 0px 24px !important;
+  font-weight: 700;
+}
+
+.ant-collapse {
+  border: none;
+  background-color: transparent;
+}
+
+.ant-collapse .ant-collapse-content > .ant-collapse-content-box {
+  padding: 12px 26px;
+}
+
+.ant-collapse > .ant-collapse-item > .ant-collapse-header {
+  padding-bottom: 12px !important;
+}
+
+.ant-collapse .ant-collapse-content {
+  border-top: 1px solid#e5e7eb;
+}
+
+.ant-select-dropdown .ant-select-item {
+  font-weight: 500;
+  border-radius: 12px;
+}
+
+.ant-input-number {
+  border-radius: 12px !important;
+  width: 60px;
+}
+
+.ant-input-number .ant-input-number-handler-wrap {
+  border-start-end-radius: 12px;
+  border-end-end-radius: 12px;
+}
+
+.ant-select-single.ant-select-show-arrow .ant-select-selection-item {
+  font-weight: 500;
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-item {
+  font-weight: 500;
+  padding: 5px 12px;
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-submenu-title {
+  font-weight: 500;
+}
+
+.ant-input {
+  border-radius: 12px !important;
+  padding: 5px 14px;
+}
+
+.ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-submenu-title {
+  padding-inline: 12px;
 }
