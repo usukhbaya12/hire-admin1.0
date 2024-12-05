@@ -52,26 +52,111 @@ export const Tools = ({
 const QuestionSettings = ({ question, onUpdate }) => {
   const isMatrix = question.type === "matrix";
 
+  const updateMatrixScores = (options, scalePoints) => {
+    const currentScores = question.matrix?.scores || [];
+    return options.map((_, rowIndex) => {
+      const row = currentScores[rowIndex] || [];
+      return scalePoints.map((_, colIndex) => row[colIndex] || 0);
+    });
+  };
+
   const handleMatrixSettingsChange = (key, value) => {
     if (key === "scalePoints") {
-      // Update scale points
-      const newScalePoints = Array.from({ length: value }, (_, i) => ({
-        text: `Цэг ${i + 1}`,
-      }));
+      const currentScalePoints = question.matrix?.scalePoints || [];
+
+      let newScalePoints;
+      if (value > currentScalePoints.length) {
+        // Adding new scale points
+        newScalePoints = [
+          ...currentScalePoints,
+          ...Array.from(
+            { length: value - currentScalePoints.length },
+            (_, i) => ({
+              text: `Цэг ${currentScalePoints.length + i + 1}`,
+              category: null,
+            })
+          ),
+        ];
+      } else {
+        // Reducing scale points
+        newScalePoints = currentScalePoints.slice(0, value);
+      }
+
+      // Update scores to match new dimensions
+      const newScores = updateMatrixScores(
+        question.options || [],
+        newScalePoints
+      );
+
       onUpdate(question.id, {
         matrix: {
           ...question.matrix,
           scalePoints: newScalePoints,
+          scores: newScores,
         },
       });
     } else {
-      // Update other matrix settings
       onUpdate(question.id, {
         matrix: {
           ...question.matrix,
           [key]: value,
         },
       });
+    }
+  };
+
+  const handleOptionCountChange = (value) => {
+    const currentOptions = question.options || [];
+    const currentScalePoints = question.matrix?.scalePoints || [];
+
+    let newOptions;
+    if (value > currentOptions.length) {
+      newOptions = [
+        ...currentOptions,
+        ...Array.from({ length: value - currentOptions.length }, (_, i) => ({
+          text: `Сонголт ${currentOptions.length + i + 1}`,
+          image: null,
+        })),
+      ];
+    } else {
+      newOptions = currentOptions.slice(0, value);
+    }
+
+    const newScores = updateMatrixScores(newOptions, currentScalePoints);
+
+    onUpdate(question.id, {
+      optionCount: value,
+      options: newOptions,
+      matrix: {
+        ...question.matrix,
+        scores: newScores,
+      },
+    });
+  };
+
+  const resetAnswersForType = (type) => {
+    switch (type) {
+      case "single":
+      case "multiple":
+        return Array.from({ length: 4 }, (_, i) => ({
+          text: `Сонголт ${i + 1}`,
+          image: null,
+          score: 0,
+          isCorrect: false,
+        }));
+      case "trueFalse":
+        return [
+          {
+            text: "Үнэн",
+            score: 1,
+            isCorrect: false,
+          },
+          {
+            text: "Худал",
+            score: 0,
+            isCorrect: false,
+          },
+        ];
     }
   };
 
@@ -83,20 +168,22 @@ const QuestionSettings = ({ question, onUpdate }) => {
           suffixIcon={<DropdownIcon width={15} height={15} />}
           value={question.type}
           onChange={(type) => {
+            const updates = {
+              type,
+              answers: resetAnswersForType(type),
+              optionCount: type === "trueFalse" ? 2 : 4,
+            };
+
             if (type === "matrix") {
-              // Initialize matrix settings when switching to matrix type
-              onUpdate(question.id, {
-                type,
-                matrix: {
-                  scalePoints: Array.from({ length: 3 }, (_, i) => ({
-                    text: `Цэг ${i + 1}`,
-                  })),
-                  allowMultiple: false,
-                },
-              });
-            } else {
-              onUpdate(question.id, { type });
+              updates.matrix = {
+                scalePoints: Array.from({ length: 3 }, (_, i) => ({
+                  text: `Цэг ${i + 1}`,
+                })),
+                allowMultiple: false,
+              };
             }
+
+            onUpdate(question.id, updates);
           }}
           options={[
             { value: "single", label: "Нэг хариулттай" },
@@ -145,15 +232,7 @@ const QuestionSettings = ({ question, onUpdate }) => {
                 min={2}
                 max={10}
                 value={question.optionCount}
-                onChange={(value) => {
-                  onUpdate(question.id, {
-                    optionCount: value,
-                    options: Array.from({ length: value }, (_, i) => ({
-                      text: `Сонголт ${i + 1}`,
-                      image: null,
-                    })),
-                  });
-                }}
+                onChange={handleOptionCountChange}
                 className="w-full"
               />
               <div className="text-sm text-gray-600">сонголттой</div>
@@ -325,6 +404,7 @@ const QuestionSettings = ({ question, onUpdate }) => {
 };
 
 import { useState, useEffect } from "react";
+import InfoModal from "../modals/Info";
 
 const BlockSettings = ({
   block,
@@ -408,8 +488,7 @@ const BlockSettings = ({
 
   return (
     <div>
-      <Modal
-        title="Анхааруулга"
+      <InfoModal
         open={isModalVisible}
         onOk={handleConfirmClear}
         onCancel={() => {
@@ -418,11 +497,8 @@ const BlockSettings = ({
             hasAnswerCategory: true,
           });
         }}
-        okText="Тийм"
-        cancelText="Үгүй"
-      >
-        <p>Ангилал устгах уу? Одоо байгаа ангилалууд устах болно.</p>
-      </Modal>
+        text={"Хариултын ангиллууд устгах гэж байна. Итгэлтэй байна уу?"}
+      />
       <div className="gap-2 flex items-center px-6">
         <Switch
           size="small"

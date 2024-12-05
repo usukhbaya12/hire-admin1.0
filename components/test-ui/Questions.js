@@ -58,14 +58,15 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
       id: `block-${Date.now()}`,
       name: `Блок #${blocks.length + 1}`,
       order: blocks.length + 1,
-      text: "",
+      value: "",
       image: null,
       hasQuestion: false,
       isExpanded: true,
       questions: [],
       settings: {
-        shuffleQuestions: false,
-        showTimer: false,
+        shuffleQuestions: true,
+        shuffleAnswers: true,
+        hasDuration: false,
         splitQuestions: false,
       },
     };
@@ -98,22 +99,20 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
       const newQuestion = {
         id: `question-${Date.now()}`,
         order: questionCount + 1,
-        text: "Энд дарж асуултын текстийг өөрчилнө үү.",
+        value: "Энд дарж асуултын текстийг өөрчилнө үү.",
         type: "single",
         required: true,
         optionCount: 4,
         totalPoints: 10,
         minValue: 0,
         maxValue: 10,
-        options: Array.from({ length: 4 }, (_, i) => ({
-          text: `Сонголт ${i + 1}`,
+        answers: Array.from({ length: 4 }, (_, i) => ({
+          value: `Сонголт ${i + 1}`,
           image: null,
           score: 0,
           isCorrect: false,
+          category: null,
         })),
-        correctAnswer: null,
-        trueScore: 1,
-        falseScore: 0,
       };
 
       setBlocks((prev) => {
@@ -151,7 +150,16 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
     [selection.questionId, handleSelect]
   );
 
+  const onTestNameChange = (newName) => {
+    setTestName(newName);
+    if (onUpdateAssessment) {
+      onUpdateAssessment({ testName: newName });
+    }
+  };
+
   const [copiedItem, setCopiedItem] = useState(null);
+
+  console.log("apiv1", blocks);
 
   useEffect(() => {
     const handleKeyboard = (e) => {
@@ -244,12 +252,10 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
 
       <div className="ml-[20%] w-4/5 p-6 px-11">
         <TestName
-          testName={
-            assessmentData?.testName ? assessmentData.testName : testName
-          }
+          testName={assessmentData?.testName || testName}
           isEditing={isEditing}
           setIsEditing={setIsEditing}
-          setTestName={setTestName}
+          setTestName={onTestNameChange}
         />
 
         {blocks.map((block) => (

@@ -60,6 +60,28 @@ const FloatingMenu = ({ editor }) => {
 const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
   const [editingCell, setEditingCell] = useState(null);
 
+  const handleScalePointKeyDown = (e, index) => {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      const nextIndex =
+        index < question.matrix.scalePoints.length - 1 ? index + 1 : 0;
+      setEditingCell({ type: "scale", index: nextIndex });
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      const prevIndex =
+        index > 0 ? index - 1 : question.matrix.scalePoints.length - 1;
+      setEditingCell({ type: "scale", index: prevIndex });
+    }
+  };
+
+  const handleOptionKeyDown = (e, index) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const nextIndex = index < question.answers.length - 1 ? index + 1 : 0;
+      setEditingCell({ type: "option", index: nextIndex });
+    }
+  };
+
   const handleCategorySelect = (category, index) => {
     const newScalePoints = [...question.matrix.scalePoints];
     newScalePoints[index] = {
@@ -108,7 +130,10 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
 
   const handleScalePointEdit = (index, newText) => {
     const newScalePoints = [...question.matrix.scalePoints];
-    newScalePoints[index] = { ...newScalePoints[index], text: newText };
+    newScalePoints[index] = {
+      ...newScalePoints[index],
+      text: newText,
+    };
     onUpdate({
       matrix: {
         ...question.matrix,
@@ -118,24 +143,26 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
   };
 
   const handleOptionEdit = (index, newText) => {
-    const newOptions = [...question.options];
+    const newOptions = [...question.answers];
     newOptions[index] = { ...newOptions[index], text: newText };
-    onUpdate({ options: newOptions });
+    onUpdate({ answers: newOptions });
   };
 
   const handleScoreChange = (rowIndex, colIndex, value) => {
     const newScores =
       question.matrix.scores ||
-      Array(question.options.length)
+      Array(question.answers.length)
         .fill()
         .map(() => Array(question.matrix.scalePoints.length).fill(0));
 
-    newScores[rowIndex][colIndex] = value;
+    // Create a deep copy of the scores array
+    const updatedScores = newScores.map((row) => [...row]);
+    updatedScores[rowIndex][colIndex] = value;
 
     onUpdate({
       matrix: {
         ...question.matrix,
-        scores: newScores,
+        scores: updatedScores,
       },
     });
   };
@@ -166,6 +193,8 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
                       }
                       setEditingCell(null);
                     }}
+                    onKeyDown={(e) => handleScalePointKeyDown(e, index)}
+                    onFocus={(e) => e.target.select()}
                     autoFocus
                     className="w-full text-center outline-none underline"
                   />
@@ -224,7 +253,7 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
       </div>
 
       <div className="pt-4"></div>
-      {question.options.map((option, rowIndex) => (
+      {question.answers.map((option, rowIndex) => (
         <div key={rowIndex} className="flex items-center">
           <div className="w-1/4 border-r py-1 pb-2">
             {editingCell?.type === "option" &&
@@ -238,6 +267,8 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
                   }
                   setEditingCell(null);
                 }}
+                onKeyDown={(e) => handleOptionKeyDown(e, rowIndex)}
+                onFocus={(e) => e.target.select()}
                 autoFocus
                 className="w-full outline-none underline"
               />
@@ -357,9 +388,9 @@ const AddQuestion = ({
       const file = e.target.files?.[0];
       if (file) {
         const imageUrl = URL.createObjectURL(file);
-        const newOptions = [...question.options];
+        const newOptions = [...question.answers];
         newOptions[index] = { ...newOptions[index], image: { url: imageUrl } };
-        onUpdate({ options: newOptions });
+        onUpdate({ answers: newOptions });
       }
     };
 
@@ -367,43 +398,43 @@ const AddQuestion = ({
   };
 
   const removeOptionImage = (index) => {
-    const newOptions = [...question.options];
+    const newOptions = [...question.answers];
     newOptions[index] = { ...newOptions[index], image: null };
-    onUpdate({ options: newOptions });
+    onUpdate({ answers: newOptions });
   };
 
   const handleOptionChange = (index, changes) => {
-    const newOptions = [...question.options];
+    const newOptions = [...question.answers];
     newOptions[index] = {
       ...newOptions[index],
       ...changes,
     };
-    onUpdate({ options: newOptions });
+    onUpdate({ answers: newOptions });
   };
 
   const handleOptionBlur = (index) => {
-    if (!question.options[index].text) {
+    if (!question.answers[index].text) {
       handleOptionChange(index, { text: `Сонголт ${index + 1}` });
     }
     setEditingOptionIndex(null);
   };
 
   const handleCategorySelect = (category, index) => {
-    const newOptions = [...question.options];
+    const newOptions = [...question.answers];
     newOptions[index] = {
       ...newOptions[index],
       category,
     };
-    onUpdate({ options: newOptions });
+    onUpdate({ answers: newOptions });
   };
 
   const handleRemoveCategory = (index) => {
-    const newOptions = [...question.options];
+    const newOptions = [...question.answers];
     newOptions[index] = {
       ...newOptions[index],
       category: null,
     };
-    onUpdate({ options: newOptions });
+    onUpdate({ answers: newOptions });
   };
 
   const getCategorySubmenu = (index) => ({
@@ -443,21 +474,21 @@ const AddQuestion = ({
         label: <div className="pl-2">Устгах</div>,
         icon: <TrashIcon width={16} />,
         onClick: () => {
-          const newOptions = [...question.options];
+          const newOptions = [...question.answers];
           newOptions.splice(index, 1);
           onUpdate({
-            options: newOptions,
+            answers: newOptions,
             optionCount: newOptions.length,
           });
         },
         danger: true,
-        disabled: question.options.length <= 2,
+        disabled: question.answers.length <= 2,
       },
     ],
   });
 
   const handleCorrectAnswerChange = (index, checked) => {
-    const newOptions = [...question.options];
+    const newOptions = [...question.answers];
 
     if (question.type === "single") {
       newOptions.forEach((opt, i) => {
@@ -467,7 +498,7 @@ const AddQuestion = ({
       newOptions[index] = { ...newOptions[index], isCorrect: checked };
     }
 
-    onUpdate({ options: newOptions });
+    onUpdate({ answers: newOptions });
   };
 
   return (
@@ -535,7 +566,7 @@ const AddQuestion = ({
 
         {(question.type === "single" || question.type === "multiple") && (
           <div className="w-full">
-            {question.options.map((option, index) => (
+            {question.answers.map((option, index) => (
               <div key={index} className="flex items-center gap-2 group">
                 {question.type === "single" ? (
                   <Tooltip
@@ -599,11 +630,12 @@ const AddQuestion = ({
                                   text: e.target.value,
                                 })
                               }
+                              onFocus={(e) => e.target.select()}
                               onKeyDown={(e) => {
                                 if (e.key === "Enter") {
                                   e.preventDefault();
                                   const nextIndex =
-                                    index < question.options.length - 1
+                                    index < question.answers.length - 1
                                       ? index + 1
                                       : 0;
                                   setEditingOptionIndex(nextIndex);
@@ -683,7 +715,7 @@ const AddQuestion = ({
 
         {question.type === "constantSum" && (
           <div>
-            {question.options.map((option, index) => (
+            {question.answers.map((option, index) => (
               <div key={index} className="flex items-center gap-2 group">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -700,12 +732,13 @@ const AddQuestion = ({
                             if (e.key === "Enter") {
                               e.preventDefault();
                               const nextIndex =
-                                index < question.options.length - 1
+                                index < question.answers.length - 1
                                   ? index + 1
                                   : 0;
                               setEditingOptionIndex(nextIndex);
                             }
                           }}
+                          onFocus={(e) => e.target.select()}
                           onBlur={() => handleOptionBlur(index)}
                           autoFocus
                           className="outline-none underline w-full"
@@ -749,15 +782,15 @@ const AddQuestion = ({
                             label: <div className="pl-2">Устгах</div>,
                             icon: <TrashIcon width={16} />,
                             onClick: () => {
-                              const newOptions = [...question.options];
+                              const newOptions = [...question.answers];
                               newOptions.splice(index, 1);
                               onUpdate({
-                                options: newOptions,
+                                answers: newOptions,
                                 optionCount: newOptions.length,
                               });
                             },
                             danger: true,
-                            disabled: question.options.length <= 2,
+                            disabled: question.answers.length <= 2,
                           },
                           {
                             key: "category",
@@ -795,30 +828,36 @@ const AddQuestion = ({
         )}
         {question.type === "trueFalse" && (
           <div className="w-full">
-            <div className="flex items-center gap-2 mb-0.5">
-              <Radio disabled />
-              <div className="flex items-center gap-2 flex-1">
-                <div className="w-16">Үнэн</div>
-                <InputNumber
-                  min={0}
-                  value={question.trueScore || 1}
-                  onChange={(value) => onUpdate({ trueScore: value })}
-                  className="w-24"
-                />
+            {question.answers?.map((option, index) => (
+              <div key={index} className="flex items-center gap-2 mb-0.5">
+                <Tooltip
+                  title={
+                    assessmentData?.hasCorrectAnswers
+                      ? "Зөв хариугаар тэмдэглэх"
+                      : ""
+                  }
+                >
+                  <Radio
+                    disabled={!assessmentData?.hasCorrectAnswers}
+                    checked={option.isCorrect || false}
+                    onChange={(e) =>
+                      handleCorrectAnswerChange(index, e.target.checked)
+                    }
+                  />
+                </Tooltip>
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="w-16">{option.text}</div>
+                  <InputNumber
+                    min={0}
+                    value={option.score || 0}
+                    onChange={(value) =>
+                      handleOptionChange(index, { score: value })
+                    }
+                    className="w-24 h-[30px]"
+                  />
+                </div>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Radio disabled />
-              <div className="flex items-center gap-2 flex-1">
-                <div className="w-16">Худал</div>
-                <InputNumber
-                  min={0}
-                  value={question.falseScore || 0}
-                  onChange={(value) => onUpdate({ falseScore: value })}
-                  className="w-24 h-[30px]"
-                />
-              </div>
-            </div>
+            ))}
           </div>
         )}
       </div>

@@ -5,6 +5,8 @@ import { Modal, Select, Input, Switch, Button, Form, Radio } from "antd";
 import { DropdownIcon, TagIcon } from "./Icons";
 
 const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
+  const [form] = Form.useForm();
+
   const [isEditing, setIsEditing] = useState(false);
   const [testName, setTestName] = useState("Тестийн нэр");
   const [categories, setCategories] = useState([]);
@@ -40,6 +42,14 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
   };
 
   const onSubmit = async () => {
+    if (isCategorySwitchOn) {
+      try {
+        await form.validateFields();
+      } catch (error) {
+        return; // Don't submit if validation fails
+      }
+    }
+
     const formData = {
       testName: testName,
       hasAnswerCategory: isCategorySwitchOn,
@@ -52,6 +62,7 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
     setCategoryInput("");
     setIsEditing(false);
     setCategorySwitchOn(false);
+    form.resetFields();
     handleOk(formData);
   };
 
@@ -89,12 +100,12 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
             size={testName.length + 10}
             style={{
               fontWeight: "bold",
-              fontSize: "16px",
+              fontSize: "18px",
             }}
           />
         ) : (
           <div
-            className="cursor-pointer font-bold text-[16px] hover:bg-neutral rounded-md"
+            className="cursor-pointer font-bold text-[18px] hover:bg-neutral rounded-md"
             onClick={handleEditClick}
           >
             {testName}
@@ -102,7 +113,7 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
         )}
       </div>
 
-      <div className="flex pt-5 gap-4">
+      <div className="flex pt-3 gap-4">
         <Select
           placeholder="Тестийн ангилал"
           suffixIcon={<DropdownIcon width={15} height={15} />}
@@ -135,27 +146,41 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
         <div className="pt-3">
           <div>
             <div className="font-bold pb-1">Ангиллууд</div>
-            <Form.Item>
-              <Input
-                value={categoryInput}
-                onChange={handleCategoryInputChange}
-                placeholder="Таслалаар хязгаарлан оруулна уу. Жишээ нь: D,I,S,C"
-                className="category"
-              />
-              {categories.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {categories.map((category, index) => (
-                    <div
-                      key={index}
-                      className="bg-blue-100 px-2 py-0.5 gap-2 rounded-md text-sm flex items-center"
-                    >
-                      <TagIcon width={14} />
-                      {category}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </Form.Item>
+            <Form form={form}>
+              <Form.Item
+                name="categoryInput"
+                rules={[
+                  {
+                    validator: (_, value) => {
+                      if (!value || categories.length === 0) {
+                        return Promise.reject("Ангиллууд оруулна уу.");
+                      }
+                      return Promise.resolve();
+                    },
+                  },
+                ]}
+              >
+                <Input
+                  value={categoryInput}
+                  onChange={handleCategoryInputChange}
+                  placeholder="Таслалаар хязгаарлан оруулна уу. Жишээ нь: D,I,S,C"
+                  className="category"
+                />
+                {categories.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {categories.map((category, index) => (
+                      <div
+                        key={index}
+                        className="bg-blue-100 px-2 py-0.5 gap-2 rounded-md text-sm flex items-center"
+                      >
+                        <TagIcon width={14} />
+                        {category}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Form.Item>
+            </Form>
           </div>
         </div>
       )}
