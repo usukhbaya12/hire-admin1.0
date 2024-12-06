@@ -1,4 +1,6 @@
+"use server";
 import { api } from "@/utils/routes";
+import { cookies } from "next/headers";
 
 export const createAssessmentCategory = async ({ name, description }) => {
   const token = (await cookies()).get("auth-token");
@@ -21,8 +23,8 @@ export const createAssessmentCategory = async ({ name, description }) => {
     return {
       data: res.payload,
       token: true,
-      message: res?.payload?.message,
-      status: res?.payload?.status,
+      message: res?.message,
+      status: res?.status,
       success: res.succeed,
     };
   } catch (error) {
@@ -50,8 +52,8 @@ export const createAssessmentLevel = async ({ name, parent }) => {
     return {
       data: res.payload,
       token: true,
-      message: res?.payload?.message,
-      status: res?.payload?.status,
+      message: res?.message,
+      status: res?.status,
       success: res.succeed,
     };
   } catch (error) {
@@ -71,8 +73,8 @@ export const getAssessmentCategory = async () => {
     return {
       data: res.payload,
       token: true,
-      message: res?.payload?.message,
-      status: res?.payload?.status,
+      message: res?.message,
+      status: res?.status,
       success: res.succeed,
     };
   } catch (error) {
@@ -91,8 +93,30 @@ export const getAssessmentCategoryById = async (id) => {
     return {
       data: res.payload,
       token: true,
-      message: res?.payload?.message,
-      status: res?.payload?.status,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+  }
+};
+export const getAssessmentById = async (id) => {
+  try {
+    const token = (await cookies()).get("auth-token");
+    const res = await fetch(`${api}assessment/${id}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token?.value ?? ""}`,
+      },
+    }).then((d) => d.json());
+    console.log(res);
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
       success: res.succeed,
     };
   } catch (error) {
@@ -130,12 +154,12 @@ export const createAssessment = async (values) => {
       },
       body: JSON.stringify(body),
     }).then((d) => d.json());
-    console.log(res);
+
     return {
       data: res.payload,
       token: true,
-      message: res?.payload?.message,
-      status: res?.payload?.status,
+      message: res?.message,
+      status: res?.status,
       success: res.succeed,
     };
   } catch (error) {

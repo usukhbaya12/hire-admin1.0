@@ -5,7 +5,11 @@ import { Input, Select, Button } from "antd";
 import { SearchIcon, GlobeIcon, DropdownIcon, PlusIcon } from "./Icons";
 import { useRouter } from "next/navigation";
 import NewAssessment from "./NewAssessment";
-import { getAssessmentCategory } from "@/app/(api)/assessment";
+import {
+  createAssessment,
+  getAssessmentCategory,
+} from "@/app/(api)/assessment";
+import { AssessmentType } from "@/utils/values";
 
 const Assessments = () => {
   const router = useRouter();
@@ -22,11 +26,27 @@ const Assessments = () => {
   useEffect(() => {
     getConstant();
   }, []);
-  const handleOk = (formData) => {
+  const handleOk = async (formData) => {
     localStorage.removeItem("assessmentData");
 
     localStorage.setItem("assessmentData", JSON.stringify(formData));
-    router.push("/test");
+    console.log(formData);
+    await createAssessment({
+      category: formData.assessmentCategory,
+      name: formData.testName,
+      description: "",
+      usage: "",
+      measure: "",
+      questionCount: 0,
+      price: 0,
+      duration: 0,
+      type: AssessmentType.UNELGEE,
+    }).then((d) => {
+      if (d.success) {
+        router.push(`/test?id=${d.data}`);
+      }
+    });
+    // router.push("/test");
     setIsModalOpen(false);
   };
 

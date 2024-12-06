@@ -7,14 +7,27 @@ import { EyeIcon } from "@/components/Icons";
 import Questions from "@/components/test-ui/Questions";
 import Settings from "@/components/test-ui/settings/Settings";
 import {
+  getAssessmentById,
   getAssessmentCategory,
   getAssessmentCategoryById,
 } from "../(api)/assessment";
+import { useSearchParams } from "next/navigation";
 
 export default function Home() {
   const [assessmentData, setAssessmentData] = useState(null);
   const [assessmentCategories, setAssessmentCategories] = useState([]);
+  const params = useSearchParams();
 
+  const fetchData = async () => {
+    const id = params.get("id");
+    console.log(id);
+    if (id) {
+      await getAssessmentById(id).then((d) => console.log(d));
+    }
+  };
+  useEffect(() => {
+    fetchData();
+  }, []);
   const [assessment, setAssessment] = useState({
     name: "",
     description: null,
@@ -79,7 +92,7 @@ export default function Home() {
         ...prev,
         name: data.testName,
         category: data.assessmentCategory,
-        categories: data.categories.map((category) => {
+        categories: data.categories?.map((category) => {
           return { name: category, description: "" };
         }),
       }));
