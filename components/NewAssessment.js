@@ -4,12 +4,18 @@ import React, { useState } from "react";
 import { Modal, Select, Input, Switch, Button, Form, Radio } from "antd";
 import { DropdownIcon, TagIcon } from "./Icons";
 
-const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
+const NewAssessment = ({
+  isModalOpen,
+  assessmentCategories,
+  handleOk,
+  handleCancel,
+}) => {
   const [form] = Form.useForm();
 
   const [isEditing, setIsEditing] = useState(false);
   const [testName, setTestName] = useState("Тестийн нэр");
   const [categories, setCategories] = useState([]);
+
   const [isCategorySwitchOn, setCategorySwitchOn] = useState(false);
   const [isAssessment, setIsAssessment] = useState(false);
   const [categoryInput, setCategoryInput] = useState("");
@@ -25,6 +31,8 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
       setCategoryInput("");
     }
   };
+
+  const [selectedCategory, setSelectedCategory] = useState(undefined);
 
   const handleCategoryInputChange = (e) => {
     const value = e.target.value;
@@ -55,6 +63,7 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
       hasAnswerCategory: isCategorySwitchOn,
       categories: categories,
       hasCorrectAnswers: isAssessment,
+      assessmentCategory: selectedCategory,
     };
 
     setTestName("Тестийн нэр");
@@ -116,10 +125,32 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
       <div className="flex pt-3 gap-4">
         <Select
           placeholder="Тестийн ангилал"
+          options={assessmentCategories
+            .filter((cate) => cate.parent == null)
+            .map((cate) => {
+              return {
+                label: cate.name,
+                value: cate.id,
+              };
+            })}
+          onChange={(e) => {
+            setSelectedCategory(e);
+          }}
           suffixIcon={<DropdownIcon width={15} height={15} />}
         />
         <Select
           placeholder="Дэд ангилал"
+          options={assessmentCategories
+            .filter((cate) => cate.parent != null)
+            .map((cate) => {
+              return {
+                label: cate.name,
+                value: cate.id,
+              };
+            })}
+          onChange={(e) => {
+            setSelectedCategory(e);
+          }}
           suffixIcon={<DropdownIcon width={15} height={15} />}
         />
       </div>

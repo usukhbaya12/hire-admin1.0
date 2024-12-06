@@ -7,8 +7,12 @@ import { DropdownIcon, PenIcon } from "@/components/Icons";
 
 const { TextArea } = Input;
 
-const Settings = ({ assessmentData, onUpdateAssessment }) => {
-  const [testName, setTestName] = useState("Тестийн нэр");
+const Settings = ({
+  assessmentData,
+  onUpdateAssessment,
+  assessmentCategories,
+}) => {
+  const [testName, setTestName] = useState(assessmentData.testName ?? "");
   const [isEditing, setIsEditing] = useState(false);
 
   return (
@@ -31,10 +35,27 @@ const Settings = ({ assessmentData, onUpdateAssessment }) => {
             <div className="pb-2 pl-1 font-semibold">Тестийн ангилал</div>
             <Select
               placeholder="Тестийн ангилал"
+              options={assessmentCategories
+                .filter((category) => category.parent == null)
+                .map((category) => {
+                  return {
+                    label: category.name,
+                    value: category.id,
+                  };
+                })}
+              defaultValue={assessmentData.assessmentCategory}
               suffixIcon={<DropdownIcon width={15} height={15} />}
               className="mb-4"
             />
             <Select
+              options={assessmentCategories
+                .filter((category) => category.parent != null)
+                .map((category) => {
+                  return {
+                    label: category.name,
+                    value: category.id,
+                  };
+                })}
               placeholder="Дэд ангилал"
               suffixIcon={<DropdownIcon width={15} height={15} />}
             />

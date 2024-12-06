@@ -1,19 +1,27 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Input, Select, Button } from "antd";
 import { SearchIcon, GlobeIcon, DropdownIcon, PlusIcon } from "./Icons";
 import { useRouter } from "next/navigation";
 import NewAssessment from "./NewAssessment";
+import { getAssessmentCategory } from "@/app/(api)/assessment";
 
 const Assessments = () => {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const [category, setCategory] = useState([]);
   const showModal = () => {
     setIsModalOpen(true);
   };
-
+  const getConstant = async () => {
+    await getAssessmentCategory().then((d) => {
+      if (d.success) setCategory(d.data);
+    });
+  };
+  useEffect(() => {
+    getConstant();
+  }, []);
   const handleOk = (formData) => {
     localStorage.removeItem("assessmentData");
 
@@ -35,6 +43,7 @@ const Assessments = () => {
             <Select
               prefix={<GlobeIcon width={19} height={19} />}
               placeholder="Төрлөөр хайх"
+              options={category.map((c) => ({ label: c.name, value: c.id }))}
               suffixIcon={<DropdownIcon width={15} height={15} />}
             />
           </div>
@@ -58,6 +67,7 @@ const Assessments = () => {
       </div>
 
       <NewAssessment
+        assessmentCategories={category}
         isModalOpen={isModalOpen}
         handleOk={handleOk}
         handleCancel={handleCancel}

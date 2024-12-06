@@ -6,15 +6,85 @@ import { Button } from "antd";
 import { EyeIcon } from "@/components/Icons";
 import Questions from "@/components/test-ui/Questions";
 import Settings from "@/components/test-ui/settings/Settings";
+import {
+  getAssessmentCategory,
+  getAssessmentCategoryById,
+} from "../(api)/assessment";
 
 export default function Home() {
   const [assessmentData, setAssessmentData] = useState(null);
+  const [assessmentCategories, setAssessmentCategories] = useState([]);
 
+  const [assessment, setAssessment] = useState({
+    name: "",
+    description: null,
+    measure: null,
+    usage: null,
+    duration: 0,
+    price: 0,
+    function: null,
+    advice: null,
+    author: null,
+    type: null,
+    questionShuffle: false,
+    answerShuffle: false,
+    questionCount: 0,
+    level: null,
+    category: null,
+    icons: null,
+    categories: [],
+  });
+  const [questions, setQuestions] = useState([
+    {
+      category: null,
+      type: null,
+      question: {
+        name: null,
+        minValue: null,
+        maxValue: null,
+        orderNumber: null,
+      },
+      answers: [
+        {
+          answer: [
+            {
+              value: {
+                value: null,
+                point: null,
+                orderNumber: null,
+              },
+              matrix: [
+                {
+                  valie: null,
+                  category: null,
+                  orderNumber: null,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ]);
+  const getCategories = async () => {
+    await getAssessmentCategory().then((d) => {
+      if (d.success) setAssessmentCategories(d.data);
+    });
+  };
   useEffect(() => {
     const data = localStorage.getItem("assessmentData");
     if (data) {
       setAssessmentData(JSON.parse(data));
+      setAssessment((prev) => ({
+        ...prev,
+        name: data.testName,
+        category: data.assessmentCategory,
+        categories: data.categories.map((category) => {
+          return { name: category, description: "" };
+        }),
+      }));
     }
+    getCategories();
   }, []);
 
   const handleUpdateAssessment = (updates) => {
@@ -32,6 +102,8 @@ export default function Home() {
       label: "Асуултууд",
       content: (
         <Questions
+          questions={questions}
+          assessment={assessment}
           assessmentData={assessmentData}
           onUpdateAssessment={handleUpdateAssessment}
         />
@@ -40,7 +112,14 @@ export default function Home() {
     {
       key: "2",
       label: "Тохиргоо",
-      content: <Settings assessmentData={assessmentData} />,
+      content: (
+        <Settings
+          assessment={assessment}
+          quesitons={questions}
+          assessmentData={assessmentData}
+          assessmentCategories={assessmentCategories}
+        />
+      ),
     },
     {
       key: "3",
@@ -58,6 +137,12 @@ export default function Home() {
 
   const handleTabClick = (key) => {
     setActiveKey(key);
+  };
+
+  const publish = async () => {
+    console.log(first);
+    console.log("asdf");
+    console.log(assessment);
   };
 
   return (
@@ -87,7 +172,10 @@ export default function Home() {
             <Button className="border-main text-main rounded-xl px-4 login mb-0 font-semibold button-2">
               <EyeIcon />
             </Button>
-            <Button className="bg-main border-none text-white rounded-xl px-4 login mb-0 font-bold">
+            <Button
+              className="bg-main border-none text-white rounded-xl px-4 login mb-0 font-bold"
+              onClick={publish}
+            >
               Хадгалах
             </Button>
           </div>
