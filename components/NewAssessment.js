@@ -46,7 +46,7 @@ const NewAssessment = ({ isModalOpen, handleOk, handleCancel }) => {
       try {
         await form.validateFields();
       } catch (error) {
-        return; // Don't submit if validation fails
+        return;
       }
     }
 

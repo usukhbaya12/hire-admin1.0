@@ -88,7 +88,7 @@ export default function Home() {
               <EyeIcon />
             </Button>
             <Button className="bg-main border-none text-white rounded-xl px-4 login mb-0 font-bold">
-              Нийтлэх
+              Хадгалах
             </Button>
           </div>
         </div>

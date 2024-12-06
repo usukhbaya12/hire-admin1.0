@@ -6,22 +6,22 @@ import { Tools } from "./Tools";
 import { TestName } from "./TestName";
 
 const Questions = ({ assessmentData, onUpdateAssessment }) => {
-  const [testName, setTestName] = useState("Тестийн нэр");
   const [isEditing, setIsEditing] = useState(false);
   const [blocks, setBlocks] = useState([
     {
       id: "block-1",
       name: "Блок #1",
       order: 1,
-      text: "",
+      value: "",
       image: null,
       hasQuestion: false,
       isExpanded: true,
       questions: [],
       settings: {
-        shuffleQuestions: false,
-        showTimer: false,
+        shuffleQuestions: true,
+        shuffleAnswers: true,
         splitQuestions: false,
+        hasDuration: false,
       },
     },
   ]);
@@ -151,7 +151,6 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
   );
 
   const onTestNameChange = (newName) => {
-    setTestName(newName);
     if (onUpdateAssessment) {
       onUpdateAssessment({ testName: newName });
     }
@@ -163,33 +162,29 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
 
   useEffect(() => {
     const handleKeyboard = (e) => {
+      const isInEditor = e.target.closest(".ProseMirror") !== null;
+
+      if (isInEditor) return;
+
       if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")
         return;
 
       const isCopy = (e.ctrlKey || e.metaKey) && e.key === "c";
       const isPaste = (e.ctrlKey || e.metaKey) && e.key === "v";
 
-      if (isCopy) {
+      if (isCopy && selection.blockId) {
         e.preventDefault();
-        if (selection.questionId) {
-          const block = blocks.find((b) => b.id === selection.blockId);
-          const question = block?.questions.find(
-            (q) => q.id === selection.questionId
-          );
-          if (question) {
-            setCopiedItem({
-              type: "question",
-              data: JSON.parse(JSON.stringify(question)),
-            });
-          }
-        } else if (selection.blockId) {
-          const block = blocks.find((b) => b.id === selection.blockId);
-          if (block) {
-            setCopiedItem({
-              type: "block",
-              data: JSON.parse(JSON.stringify(block)),
-            });
-          }
+        const item = selection.questionId
+          ? blocks
+              .find((b) => b.id === selection.blockId)
+              ?.questions.find((q) => q.id === selection.questionId)
+          : blocks.find((b) => b.id === selection.blockId);
+
+        if (item) {
+          setCopiedItem({
+            type: selection.questionId ? "question" : "block",
+            data: JSON.parse(JSON.stringify(item)),
+          });
         }
       }
 
@@ -205,17 +200,12 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
           };
 
           setBlocks((prev) =>
-            prev.map((block) => {
-              if (block.id === selection.blockId) {
-                return {
-                  ...block,
-                  questions: [...block.questions, newQuestion],
-                };
-              }
-              return block;
-            })
+            prev.map((block) =>
+              block.id === selection.blockId
+                ? { ...block, questions: [...block.questions, newQuestion] }
+                : block
+            )
           );
-
           handleSelect(selection.blockId, newQuestion.id);
         } else if (copiedItem.type === "block") {
           const newBlock = {
@@ -237,7 +227,7 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
 
     window.addEventListener("keydown", handleKeyboard);
     return () => window.removeEventListener("keydown", handleKeyboard);
-  }, [blocks, selection, copiedItem]);
+  }, [blocks, selection, copiedItem, handleSelect]);
 
   return (
     <div className="flex mt-[98px]">
@@ -252,7 +242,7 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
 
       <div className="ml-[20%] w-4/5 p-6 px-11">
         <TestName
-          testName={assessmentData?.testName || testName}
+          testName={assessmentData?.testName}
           isEditing={isEditing}
           setIsEditing={setIsEditing}
           setTestName={onTestNameChange}
