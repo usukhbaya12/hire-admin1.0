@@ -1,11 +1,11 @@
+"use client";
+
 import React, { useEffect } from "react";
-import { Button } from "antd";
-import { ImageIcon } from "../../Icons";
+import { ImageIcon, BoldIcon, ItalicIcon, UnderlineIcon } from "../../Icons";
 import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
 import Underline from "@tiptap/extension-underline";
-import FloatingMenu from "./FloatingMenu";
 
 const QuestionEditor = ({ initialContent, onUpdate, orderNumber }) => {
   const editor = useEditor({
@@ -24,6 +24,7 @@ const QuestionEditor = ({ initialContent, onUpdate, orderNumber }) => {
       }),
     ],
     content: initialContent || "Энд дарж асуултын текстийг өөрчилнө үү.",
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onUpdate(editor.getHTML());
     },
@@ -37,10 +38,74 @@ const QuestionEditor = ({ initialContent, onUpdate, orderNumber }) => {
 
         if (event.target.tagName === "IMG") {
           event.target.setAttribute("data-selected", "true");
+        } else {
+          const node = view.state.doc.nodeAt(pos);
+          if (node && node.isText) {
+            const parentOffset = view.posAtDOM(event.target);
+            const from = parentOffset;
+            const to = parentOffset + node.nodeSize;
+            const transaction = view.state.tr.setSelection(
+              view.state.selection.constructor.create(view.state.doc, from, to)
+            );
+            view.dispatch(transaction);
+          }
         }
       },
     },
   });
+
+  const FloatingMenu = () => {
+    if (!editor) return null;
+
+    const handleFormat = (e, type) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      switch (type) {
+        case "bold":
+          editor.commands.toggleBold();
+          break;
+        case "italic":
+          editor.commands.toggleItalic();
+          break;
+        case "underline":
+          editor.commands.toggleUnderline();
+          break;
+      }
+    };
+
+    return (
+      <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-lg border text-gray-400">
+        <button
+          type="button"
+          onMouseDown={(e) => handleFormat(e, "bold")}
+          className={`p-1 rounded hover:text-gray-600 ${
+            editor.isActive("bold") ? "text-main" : ""
+          }`}
+        >
+          <BoldIcon />
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => handleFormat(e, "italic")}
+          className={`p-1 rounded hover:text-gray-600 ${
+            editor.isActive("italic") ? "text-main" : ""
+          }`}
+        >
+          <ItalicIcon />
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => handleFormat(e, "underline")}
+          className={`p-1 rounded hover:text-gray-600 ${
+            editor.isActive("underline") ? "text-main" : ""
+          }`}
+        >
+          <UnderlineIcon />
+        </button>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const style = document.createElement("style");
@@ -84,16 +149,18 @@ const QuestionEditor = ({ initialContent, onUpdate, orderNumber }) => {
         {editor && (
           <BubbleMenu
             editor={editor}
-            tippyOptions={{ duration: 100 }}
-            shouldShow={({ editor, state }) => {
-              const { selection } = state;
-              const isTextSelected = !selection.empty;
-              const hasImage = editor.isActive("image");
-              return isTextSelected && !hasImage;
+            tippyOptions={{
+              duration: 100,
+              placement: "top",
+              interactive: true,
             }}
-            className="bg-white"
+            shouldShow={({ state }) => {
+              const { selection } = state;
+              return !selection.empty;
+            }}
+            className="bg-white z-50"
           >
-            <FloatingMenu editor={editor} />
+            <FloatingMenu />
           </BubbleMenu>
         )}
         <EditorContent editor={editor} />

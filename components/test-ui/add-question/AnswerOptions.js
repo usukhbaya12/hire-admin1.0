@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Radio,
   Checkbox,
@@ -161,6 +161,7 @@ const AnswerOptions = ({
             removeOptionImage={removeOptionImage}
             handleRemoveCategory={handleRemoveCategory}
             getOptionMenu={getOptionMenu}
+            question={question}
           />
         </div>
       ))}
@@ -182,6 +183,7 @@ const AnswerOptions = ({
               handleRemoveCategory={handleRemoveCategory}
               getOptionMenu={getOptionMenu}
               isConstantSum
+              question={question}
             />
           </div>
         </div>
@@ -260,10 +262,10 @@ const AnswerTypeControl = ({
 
   return (
     <Tooltip
-      title={assessmentData?.hasCorrectAnswers ? "Зөв хариугаар тэмдэглэх" : ""}
+      title={assessmentData?.type === 10 ? "Зөв хариугаар тэмдэглэх" : ""}
     >
       <Control
-        disabled={!assessmentData?.hasCorrectAnswers}
+        disabled={!assessmentData?.type === 20}
         checked={option.isCorrect || false}
         onChange={(e) => onChange(index, e.target.checked)}
         className={type === "multiple" ? "pr-2" : ""}
@@ -283,6 +285,7 @@ const AnswerContent = ({
   handleRemoveCategory,
   getOptionMenu,
   isConstantSum = false,
+  question,
 }) => {
   return (
     <div className="flex-1">
@@ -315,7 +318,7 @@ const AnswerContent = ({
                     if (e.key === "Enter") {
                       e.preventDefault();
                       const nextIndex =
-                        index < option.answers?.length - 1 ? index + 1 : 0;
+                        index < question.answers.length - 1 ? index + 1 : 0;
                       setEditingOptionIndex(nextIndex);
                     }
                   }}
@@ -326,7 +329,7 @@ const AnswerContent = ({
                 />
               ) : (
                 <div
-                  className={`cursor-pointer rounded-md w-full ${
+                  className={`cursor-pointer rounded-md ${
                     editingOptionIndex === null ? "hover:bg-neutral" : ""
                   }`}
                   onClick={() => setEditingOptionIndex(index)}
@@ -372,7 +375,6 @@ const AnswerContent = ({
             type="text"
             className="opacity-0 group-hover:opacity-100 transition-opacity"
             icon={<MoreIcon width={16} />}
-            onClick={(e) => e.stopPropagation()}
           />
         </Dropdown>
       </div>

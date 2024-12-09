@@ -148,3 +148,55 @@ body {
 .ant-dropdown .ant-dropdown-menu .ant-dropdown-menu-submenu-title {
   padding-inline: 12px;
 }
+
+.ant-btn-sm {
+  font-weight: 500;
+}
+
+.ant-btn-variant-solid {
+  background-color: #f36421;
+  padding: 12px 10px;
+  border-radius: 9px;
+  box-shadow: none;
+}
+
+.ant-btn-variant-link {
+  color: #f36421;
+}
+
+.ant-dropdown .ant-table-filter-dropdown .ant-table-filter-dropdown-btns {
+  padding: 10px 10px;
+}
+
+.ant-input-affix-wrapper > input.ant-input {
+  padding-inline-start: 4px;
+}
+
+.ant-segmented {
+  border-radius: 14px;
+}
+
+.ant-segmented .ant-segmented-item {
+  padding-inline: 5px;
+  padding-block: 1px;
+  border-radius: 12px;
+}
+
+.ant-segmented .ant-segmented-item-selected {
+  background-color: #f36421;
+  color: white;
+  font-weight: 700;
+}
+
+.ant-segmented .ant-segmented-thumb {
+  background-color: #f36421;
+  border-radius: 12px;
+}
+
+.price .ant-input-number .ant-input-number-input {
+  width: 100px !important;
+}
+
+.ant-input-number-group .ant-input-number-group-addon:last-child {
+  border-radius: 12px;
+}

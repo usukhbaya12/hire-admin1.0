@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from "react";
 import { MenuIcon, DropdownIcon, TagIcon } from "../Icons";
 import {

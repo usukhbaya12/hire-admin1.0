@@ -60,7 +60,26 @@ export const createAssessmentLevel = async ({ name, parent }) => {
     console.error(error);
   }
 };
-
+export const getAssessments = async () => {
+  try {
+    const res = await fetch(`${api}assessment`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }).then((d) => d.json());
+    console.log(res);
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+  }
+};
 export const getAssessmentCategory = async () => {
   try {
     const res = await fetch(`${api}assessmentCategory`, {

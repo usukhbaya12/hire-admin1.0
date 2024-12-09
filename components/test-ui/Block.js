@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Button, Tooltip } from "antd";
 import {
@@ -13,41 +15,24 @@ import { Question } from "./Question";
 import { useEditor, EditorContent, BubbleMenu } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-
-const FloatingMenu = ({ editor }) => {
-  if (!editor) return null;
-
-  return (
-    <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-lg border text-gray-400">
-      <button
-        onClick={() => editor.chain().focus().toggleBold().run()}
-        className={`p-1 rounded hover:text-gray-600 ${
-          editor.isActive("bold") ? "text-main" : ""
-        }`}
-      >
-        <BoldIcon />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-        className={`p-1 rounded hover:text-gray-600 ${
-          editor.isActive("italic") ? "text-main" : ""
-        }`}
-      >
-        <ItalicIcon />
-      </button>
-      <button
-        onClick={() => editor.chain().focus().toggleUnderline().run()}
-        className={`p-1 rounded hover:text-gray-600 ${
-          editor.isActive("underline") ? "text-main" : ""
-        }`}
-      >
-        <UnderlineIcon />
-      </button>
-    </div>
-  );
-};
+import Underline from "@tiptap/extension-underline";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 export const Block = ({
+  blocksLength,
   block,
   selection,
   onSelect,
@@ -63,7 +48,10 @@ export const Block = ({
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      Underline,
+      StarterKit.configure({
+        table: false,
+      }),
       Image.configure({
         HTMLAttributes: {
           class: "h-[150px] object-cover rounded transition-all",
@@ -73,7 +61,8 @@ export const Block = ({
         draggable: false,
       }),
     ],
-    content: block.text || "",
+    content: block.text || "Энд дарж асуултын текстийг өөрчилнө үү.",
+    immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onUpdateBlock(block.id, { text: editor.getHTML() });
     },
@@ -87,10 +76,74 @@ export const Block = ({
 
         if (event.target.tagName === "IMG") {
           event.target.setAttribute("data-selected", "true");
+        } else {
+          const node = view.state.doc.nodeAt(pos);
+          if (node && node.isText) {
+            const parentOffset = view.posAtDOM(event.target);
+            const from = parentOffset;
+            const to = parentOffset + node.nodeSize;
+            const transaction = view.state.tr.setSelection(
+              view.state.selection.constructor.create(view.state.doc, from, to)
+            );
+            view.dispatch(transaction);
+          }
         }
       },
     },
   });
+
+  const FloatingMenu = () => {
+    if (!editor) return null;
+
+    const handleFormat = (e, type) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      switch (type) {
+        case "bold":
+          editor.commands.toggleBold();
+          break;
+        case "italic":
+          editor.commands.toggleItalic();
+          break;
+        case "underline":
+          editor.commands.toggleUnderline();
+          break;
+      }
+    };
+
+    return (
+      <div className="flex items-center gap-2 p-2 bg-white rounded-lg shadow-lg border text-gray-400">
+        <button
+          type="button"
+          onMouseDown={(e) => handleFormat(e, "bold")}
+          className={`p-1 rounded hover:text-gray-600 ${
+            editor.isActive("bold") ? "text-main" : ""
+          }`}
+        >
+          <BoldIcon />
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => handleFormat(e, "italic")}
+          className={`p-1 rounded hover:text-gray-600 ${
+            editor.isActive("italic") ? "text-main" : ""
+          }`}
+        >
+          <ItalicIcon />
+        </button>
+        <button
+          type="button"
+          onMouseDown={(e) => handleFormat(e, "underline")}
+          className={`p-1 rounded hover:text-gray-600 ${
+            editor.isActive("underline") ? "text-main" : ""
+          }`}
+        >
+          <UnderlineIcon />
+        </button>
+      </div>
+    );
+  };
 
   const handleBlockImageUpload = (e) => {
     const input = document.createElement("input");
@@ -115,6 +168,28 @@ export const Block = ({
 
   const isSelected = selection.blockId === block.id && !selection.questionId;
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = block.questions.findIndex((q) => q.id === active.id);
+      const newIndex = block.questions.findIndex((q) => q.id === over.id);
+
+      const newQuestions = arrayMove(block.questions, oldIndex, newIndex).map(
+        (q, index) => ({ ...q, order: index + 1 })
+      );
+
+      onUpdateBlock(block.id, { questions: newQuestions });
+    }
+  };
+
   return (
     <div
       className={`mb-4 border rounded-xl p-4 px-8 ${
@@ -125,8 +200,7 @@ export const Block = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <button
-            onClick={(e) => {
-              e.stopPropagation();
+            onClick={() => {
               onUpdateBlock(block.id, { isExpanded: !block.isExpanded });
             }}
             className="px-2 py-1 hover:bg-neutral rounded-md"
@@ -181,6 +255,7 @@ export const Block = ({
             className="text-red-500"
             type="text"
             icon={<TrashIcon width={18} />}
+            disabled={blocksLength === 1}
           />
         </div>
       </div>
@@ -232,18 +307,34 @@ export const Block = ({
           )}
 
           <div className="pl-9 pr-2 mt-4">
-            {block.questions.map((question) => (
-              <Question
-                key={question.id}
-                question={question}
-                blockId={block.id}
-                isSelected={selection.questionId === question.id}
-                onSelect={onSelect}
-                onUpdate={(updates) => onUpdateQuestion(question.id, updates)}
-                onDelete={() => onDeleteQuestion(block.id, question.id)}
-                assessmentData={assessmentData}
-              />
-            ))}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+              onDragStart={({ active }) => {
+                onSelect(block.id, active.id);
+              }}
+            >
+              <SortableContext
+                items={block.questions.map((q) => q.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {block.questions.map((question) => (
+                  <Question
+                    key={question.id}
+                    question={question}
+                    blockId={block.id}
+                    isSelected={selection.questionId === question.id}
+                    onSelect={onSelect}
+                    onUpdate={(updates) =>
+                      onUpdateQuestion(question.id, updates)
+                    }
+                    onDelete={() => onDeleteQuestion(block.id, question.id)}
+                    assessmentData={assessmentData}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
 
             <div className="flex justify-start pb-3 pt-5">
               <Button

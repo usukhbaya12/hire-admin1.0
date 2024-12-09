@@ -25,14 +25,14 @@ export default function Home() {
 
   return (
     <>
-      <div>
+      <div className="fixed w-full top-0 z-10 bg-white">
         <Header />
       </div>
-      <div className="flex">
-        <div>
+      <div className="flex mt-[48px]">
+        <div className="fixed">
           <Menu selected={selected} setSelected={setSelected} />
         </div>
-        <div className="flex-grow p-6">{display()}</div>
+        <div className="flex-grow p-6 ml-[12.4%]">{display()}</div>
       </div>
     </>
   );

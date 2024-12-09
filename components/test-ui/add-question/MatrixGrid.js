@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { InputNumber, Button, Tooltip, Dropdown } from "antd";
 import { TagIcon, DropdownIcon, PenIcon, MoreIcon } from "../../Icons";
@@ -9,14 +11,10 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
   const scalePoints = answers[0]?.matrix || [];
 
   const handleScalePointKeyDown = (e, index) => {
-    if (e.key === "ArrowRight") {
+    if (e.key === "Enter") {
       e.preventDefault();
       const nextIndex = index < scalePoints.length - 1 ? index + 1 : 0;
       setEditingCell({ type: "scale", index: nextIndex });
-    } else if (e.key === "ArrowLeft") {
-      e.preventDefault();
-      const prevIndex = index > 0 ? index - 1 : scalePoints.length - 1;
-      setEditingCell({ type: "scale", index: prevIndex });
     }
   };
 
@@ -103,7 +101,7 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
                   />
                 ) : (
                   <div
-                    className="cursor-pointer hover:bg-neutral rounded text-gray-600 px-2"
+                    className="cursor-pointer hover:bg-neutral rounded"
                     onClick={() => setEditingCell({ type: "scale", index })}
                   >
                     {point.value}
@@ -194,10 +192,18 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
               />
             ) : (
               <div
-                className="cursor-pointer hover:bg-neutral rounded"
+                className="cursor-pointer inline-block hover:bg-neutral rounded"
                 onClick={() =>
                   setEditingCell({ type: "option", index: rowIndex })
                 }
+                onMouseLeave={() => {
+                  if (
+                    editingCell?.type !== "option" ||
+                    editingCell?.index !== rowIndex
+                  ) {
+                    setEditingCell(null);
+                  }
+                }}
               >
                 {answer.value.value}
               </div>

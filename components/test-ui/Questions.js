@@ -7,6 +7,9 @@ import { TestName } from "./TestName";
 
 const Questions = ({ assessmentData, onUpdateAssessment }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [localTestName, setLocalTestName] = useState(
+    assessmentData?.name || ""
+  );
   const [blocks, setBlocks] = useState([
     {
       id: "block-1",
@@ -150,15 +153,17 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
     [selection.questionId, handleSelect]
   );
 
-  const onTestNameChange = (newName) => {
-    if (onUpdateAssessment) {
-      onUpdateAssessment({ testName: newName });
+  useEffect(() => {
+    if (assessmentData?.name) {
+      setLocalTestName(assessmentData.name);
     }
+  }, [assessmentData?.name]);
+
+  const onTestNameChange = (newName) => {
+    setLocalTestName(newName);
   };
 
   const [copiedItem, setCopiedItem] = useState(null);
-
-  console.log("apiv1", blocks);
 
   useEffect(() => {
     const handleKeyboard = (e) => {
@@ -241,16 +246,18 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
       />
 
       <div className="ml-[20%] w-4/5 p-6 px-11">
-        <TestName
-          testName={assessmentData?.testName}
-          isEditing={isEditing}
-          setIsEditing={setIsEditing}
-          setTestName={onTestNameChange}
-        />
-
+        <div className="pb-4">
+          <TestName
+            testName={localTestName}
+            isEditing={isEditing}
+            setIsEditing={setIsEditing}
+            setTestName={onTestNameChange}
+          />
+        </div>
         {blocks.map((block) => (
           <Block
             key={block.id}
+            blocksLength={blocks.length}
             block={block}
             selection={selection}
             onSelect={handleSelect}

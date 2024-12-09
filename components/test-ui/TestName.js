@@ -25,7 +25,7 @@ export const TestName = ({
   };
 
   return (
-    <div className="pb-4 px-1">
+    <div className="px-1">
       {isEditing ? (
         <input
           value={initialTestName}

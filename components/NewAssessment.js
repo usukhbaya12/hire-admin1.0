@@ -17,7 +17,7 @@ const NewAssessment = ({
   const [categories, setCategories] = useState([]);
 
   const [isCategorySwitchOn, setCategorySwitchOn] = useState(false);
-  const [isAssessment, setIsAssessment] = useState(false);
+  const [isAssessment, setIsAssessment] = useState(20);
   const [categoryInput, setCategoryInput] = useState("");
 
   const handleEditClick = () => setIsEditing(true);
@@ -62,7 +62,7 @@ const NewAssessment = ({
       testName: testName,
       hasAnswerCategory: isCategorySwitchOn,
       categories: categories,
-      hasCorrectAnswers: isAssessment,
+      type: isAssessment,
       assessmentCategory: selectedCategory,
     };
 
@@ -159,8 +159,8 @@ const NewAssessment = ({
           value={isAssessment}
           onChange={(e) => setIsAssessment(e.target.value)}
         >
-          <Radio value={false}>Үнэлгээ</Radio>
-          <Radio value={true}>Зөв хариулттай тест</Radio>
+          <Radio value={20}>Үнэлгээ</Radio>
+          <Radio value={10}>Зөв хариулттай тест</Radio>
         </Radio.Group>
       </div>
 

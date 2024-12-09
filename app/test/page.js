@@ -2,102 +2,40 @@
 
 import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
-import { Button } from "antd";
+import { Button, Spin } from "antd";
 import { EyeIcon } from "@/components/Icons";
 import Questions from "@/components/test-ui/Questions";
-import Settings from "@/components/test-ui/settings/Settings";
-import {
-  getAssessmentById,
-  getAssessmentCategory,
-  getAssessmentCategoryById,
-} from "../(api)/assessment";
-import { useSearchParams } from "next/navigation";
+import { getAssessmentById, getAssessmentCategory } from "../(api)/assessment";
+import { useSearchParams, useRouter } from "next/navigation";
+import Settings from "@/components/test-ui/Settings";
 
 export default function Home() {
   const [assessmentData, setAssessmentData] = useState(null);
   const [assessmentCategories, setAssessmentCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
   const params = useSearchParams();
+  const router = useRouter();
 
   const fetchData = async () => {
-    const id = params.get("id");
-    console.log(id);
-    if (id) {
-      await getAssessmentById(id).then((d) => console.log(d));
+    try {
+      const id = params.get("id");
+      if (id) {
+        await getAssessmentById(id).then((d) => {
+          if (d.success) setAssessmentData(d.data);
+        });
+        await getAssessmentCategory().then((d) => {
+          if (d.success) setAssessmentCategories(d.data);
+        });
+      }
+    } catch (error) {
+      message.error("Сервертэй холбогдоход алдаа гарлаа.");
+    } finally {
+      setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchData();
-  }, []);
-  const [assessment, setAssessment] = useState({
-    name: "",
-    description: null,
-    measure: null,
-    usage: null,
-    duration: 0,
-    price: 0,
-    function: null,
-    advice: null,
-    author: null,
-    type: null,
-    questionShuffle: false,
-    answerShuffle: false,
-    questionCount: 0,
-    level: null,
-    category: null,
-    icons: null,
-    categories: [],
-  });
-  const [questions, setQuestions] = useState([
-    {
-      category: null,
-      type: null,
-      question: {
-        name: null,
-        minValue: null,
-        maxValue: null,
-        orderNumber: null,
-      },
-      answers: [
-        {
-          answer: [
-            {
-              value: {
-                value: null,
-                point: null,
-                orderNumber: null,
-              },
-              matrix: [
-                {
-                  valie: null,
-                  category: null,
-                  orderNumber: null,
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  ]);
-  const getCategories = async () => {
-    await getAssessmentCategory().then((d) => {
-      if (d.success) setAssessmentCategories(d.data);
-    });
-  };
-  useEffect(() => {
-    const data = localStorage.getItem("assessmentData");
-    if (data) {
-      setAssessmentData(JSON.parse(data));
-      setAssessment((prev) => ({
-        ...prev,
-        name: data.testName,
-        category: data.assessmentCategory,
-        categories: data.categories?.map((category) => {
-          return { name: category, description: "" };
-        }),
-      }));
-    }
-    getCategories();
   }, []);
 
   const handleUpdateAssessment = (updates) => {
@@ -107,7 +45,7 @@ export default function Home() {
     }));
   };
 
-  console.log("hihi", assessmentData);
+  console.log("test", assessmentData);
 
   const items = [
     {
@@ -115,8 +53,6 @@ export default function Home() {
       label: "Асуултууд",
       content: (
         <Questions
-          questions={questions}
-          assessment={assessment}
           assessmentData={assessmentData}
           onUpdateAssessment={handleUpdateAssessment}
         />
@@ -125,20 +61,14 @@ export default function Home() {
     {
       key: "2",
       label: "Тохиргоо",
-      content: (
-        <Settings
-          assessment={assessment}
-          quesitons={questions}
-          assessmentData={assessmentData}
-          assessmentCategories={assessmentCategories}
-        />
-      ),
+      content: <Settings assessmentData={assessmentData} />,
     },
     {
       key: "3",
       label: "Үр дүн",
       content: "",
     },
+
     {
       key: "4",
       label: "Тайлан",
@@ -153,13 +83,13 @@ export default function Home() {
   };
 
   const publish = async () => {
-    console.log(first);
     console.log("asdf");
-    console.log(assessment);
+    ъ;
   };
 
   return (
     <div className="flex flex-col h-screen">
+      <Spin tip="Уншиж байна..." fullscreen spinning={loading} />
       <div className="fixed w-full top-0 z-10 bg-white">
         <Header />
         <div className="flex border-b pr-6 pl-4 justify-between items-end">
@@ -181,7 +111,23 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="flex gap-2 py-2">
+          <div className="flex gap-2 py-2 items-center">
+            <div className="mr-2 flex gap-1 items-center bg-bg20 px-2 py-0.5 rounded-lg text-main">
+              <div>Сүүлд шинэчилсэн:</div>
+              <div>
+                {assessmentData?.updatedAt &&
+                  `${
+                    new Date(assessmentData.updatedAt)
+                      .toISOString()
+                      .slice(5, 16)
+                      .replace("T", " ")
+                      .replace("-", "-")
+                      .split(" ")[0]
+                  }-нд ${new Date(assessmentData.updatedAt)
+                    .toISOString()
+                    .slice(11, 16)}`}
+              </div>
+            </div>
             <Button className="border-main text-main rounded-xl px-4 login mb-0 font-semibold button-2">
               <EyeIcon />
             </Button>
