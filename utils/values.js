@@ -3,6 +3,10 @@ export const AssessmentType = {
   UNELGEE: 20,
 };
 
+export const QuestionType = {
+  SINGLE: 10
+}
+
 export const customLocale = {
   filterTitle: "Шүүлтүүр",
   filterConfirm: "Сонгох",

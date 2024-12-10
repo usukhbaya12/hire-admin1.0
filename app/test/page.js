@@ -12,6 +12,8 @@ import {
 } from "../(api)/assessment";
 import { useSearchParams, useRouter } from "next/navigation";
 import Settings from "@/components/test-ui/Settings";
+import { createQuestion, createQuestionCategory } from "../(api)/question";
+import { QuestionType } from "@/utils/values";
 
 export default function Home() {
   const [assessmentData, setAssessmentData] = useState(null);
@@ -19,6 +21,24 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [changes, setChanges] = useState({});
   const params = useSearchParams();
+  const [blocks, setBlocks] = useState([
+    {
+      id: "block-1",
+      name: "Блок #1",
+      order: 1,
+      value: "",
+      image: null,
+      hasQuestion: false,
+      isExpanded: true,
+      questions: [],
+      settings: {
+        shuffleQuestions: true,
+        shuffleAnswers: true,
+        splitQuestions: false,
+        hasDuration: false,
+      },
+    },
+  ]);
   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -61,6 +81,8 @@ export default function Home() {
       label: "Асуултууд",
       content: (
         <Questions
+          blocks={blocks}
+          setBlocks={setBlocks}
           assessmentData={assessmentData}
           onUpdateAssessment={handleUpdateAssessment}
         />
@@ -100,6 +122,7 @@ export default function Home() {
     try {
       setLoading(true);
       const id = params.get("id");
+      
       if (id) {
         await updateAssessmentById(id, changes).then((d) => {
           if (d.success) {
@@ -110,6 +133,22 @@ export default function Home() {
             messageApi.error(d.message || "Хадгалахад алдаа гарлаа.");
           }
         });
+        blocks.map(async (block) => {
+          await createQuestionCategory().then((d) => {
+            block.questions.map(async (question) => {
+              await createQuestion({
+                category: d.data,
+                type: QuestionType.SINGLE,
+                question: {
+                  name: question.value,
+                  minValue: question.minValue,
+                  maxValue: question.maxValue,
+                  orderNumber: question.order,
+                }
+              })
+            })
+          })
+        })
       }
     } catch (error) {
       message.error("Сервертэй холбогдоход алдаа гарлаа.");

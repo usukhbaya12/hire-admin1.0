@@ -5,29 +5,17 @@ import { Block } from "./Block";
 import { Tools } from "./Tools";
 import { TestName } from "./TestName";
 
-const Questions = ({ assessmentData, onUpdateAssessment }) => {
+const Questions = ({
+  assessmentData,
+  onUpdateAssessment,
+  blocks,
+  setBlocks,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [localTestName, setLocalTestName] = useState(
     assessmentData?.data.name || ""
   );
-  const [blocks, setBlocks] = useState([
-    {
-      id: "block-1",
-      name: "Блок #1",
-      order: 1,
-      value: "",
-      image: null,
-      hasQuestion: false,
-      isExpanded: true,
-      questions: [],
-      settings: {
-        shuffleQuestions: true,
-        shuffleAnswers: true,
-        splitQuestions: false,
-        hasDuration: false,
-      },
-    },
-  ]);
+
   const [selection, setSelection] = useState({
     blockId: blocks[0].id,
     questionId: null,
