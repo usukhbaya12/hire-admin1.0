@@ -30,7 +30,9 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
     const newAnswers = answers.map((answer) => ({
       ...answer,
       matrix: answer.matrix.map((item, i) =>
-        i === index ? { ...item, category } : item
+        i === index
+          ? { ...item, category: category.id, categoryName: category.name }
+          : item
       ),
     }));
     onUpdate({ answers: { answer: newAnswers } });
@@ -40,7 +42,7 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
     const newAnswers = answers.map((answer) => ({
       ...answer,
       matrix: answer.matrix.map((item, i) =>
-        i === index ? { ...item, category: null } : item
+        i === index ? { ...item, category: null, categoryName: null } : item
       ),
     }));
     onUpdate({ answers: { answer: newAnswers } });
@@ -114,7 +116,7 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
                       onClick={() => handleRemoveCategory(index)}
                     >
                       <TagIcon width={14} />
-                      {point.category}
+                      {point.categoryName}
                     </div>
                   </Tooltip>
                 ) : (
@@ -130,11 +132,10 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
                           ),
                           icon: <PenIcon width={16} />,
                           disabled:
-                            !assessmentData?.hasAnswerCategory ||
-                            !assessmentData?.categories?.length,
-                          children: assessmentData?.categories?.map(
+                            !assessmentData?.data.answerCategories.length > 0,
+                          children: assessmentData?.data.answerCategories?.map(
                             (category) => ({
-                              key: category,
+                              key: category.id,
                               label: (
                                 <div className="flex items-center gap-2">
                                   <TagIcon
@@ -142,7 +143,7 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
                                     className="text-gray-400"
                                   />
                                   <span className="text-gray-600 font-medium">
-                                    {category.toLowerCase()}
+                                    {category.name}
                                   </span>
                                 </div>
                               ),

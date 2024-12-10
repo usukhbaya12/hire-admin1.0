@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { Input, Spin, Button, Table, Dropdown, message } from "antd";
+import { Input, Spin, Button, Table, Dropdown, message, Select } from "antd";
 import {
   SearchIcon,
   PlusIcon,
@@ -12,6 +12,8 @@ import {
   CopyIcon,
   TrashIcon,
   TestIcon,
+  GlobeIcon,
+  DropdownIcon,
 } from "./Icons";
 import { useRouter } from "next/navigation";
 import NewAssessment from "./NewAssessment";
@@ -19,6 +21,7 @@ import {
   createAssessment,
   getAssessmentCategory,
   getAssessments,
+  deleteAssessmentById,
 } from "@/app/(api)/assessment";
 import { customLocale } from "@/utils/values";
 
@@ -80,7 +83,7 @@ const Assessments = () => {
   const getConstant = async () => {
     try {
       await getAssessments().then((d) => {
-        if (d.success) setAssessments(d.data.ass);
+        if (d.success) setAssessments(d.data.res);
       });
       await getAssessmentCategory().then((d) => {
         if (d.success) setCategory(d.data);
@@ -98,7 +101,7 @@ const Assessments = () => {
 
   useEffect(() => {
     const filtered = assessments.filter((item) =>
-      item.name.toLowerCase().includes(searchText.toLowerCase())
+      item.data.name.toLowerCase().includes(searchText.toLowerCase())
     );
     setFilteredAssessments(filtered);
   }, [assessments, searchText]);
@@ -107,6 +110,12 @@ const Assessments = () => {
     localStorage.removeItem("assessmentData");
 
     localStorage.setItem("assessmentData", JSON.stringify(formData));
+
+    const answerCategories =
+      formData.categories?.map((category) => ({
+        name: category,
+        description: "",
+      })) || [];
 
     await createAssessment({
       category: formData.assessmentCategory,
@@ -118,11 +127,15 @@ const Assessments = () => {
       price: 0,
       duration: 0,
       type: formData.type,
+      answerCategories: answerCategories,
     }).then((d) => {
       if (d.success) {
-        router.push(`/test?id=${d.data}`);
+        console.log(d);
+        router.push(`/test?id=${d.data.id}`);
       }
     });
+
+    console.log(answerCategories);
     // router.push("/test");
     setIsModalOpen(false);
   };
@@ -134,23 +147,29 @@ const Assessments = () => {
 
   const columns = [
     {
+      title: "Төрөл",
+      dataIndex: ["data", "type"],
+      render: (record) => (
+        <div className="text-center gap-2 text-main">
+          {record === 20 ? <SurveyIcon width={18} /> : <TestIcon width={18} />}
+          <div className="text-black font-semibold"></div>
+        </div>
+      ),
+      width: "0px",
+    },
+    {
       title: "Тестийн нэр",
-      dataIndex: "name",
+      dataIndex: ["data", "name"],
       sorter: (a, b) => a.name.localeCompare(b.name),
       render: (text, record) => (
         <div className="flex items-center gap-2 text-main">
-          {record.type === 20 ? (
-            <SurveyIcon width={18} />
-          ) : (
-            <TestIcon width={18} />
-          )}
           <div className="text-black font-semibold">{text}</div>
         </div>
       ),
     },
     {
-      title: "Төрөл",
-      dataIndex: "type",
+      title: "Ангилал",
+      dataIndex: "category.id",
       filters: [
         {
           text: "Joe",
@@ -191,11 +210,11 @@ const Assessments = () => {
     },
     {
       title: "Төлөв",
-      dataIndex: "status",
+      dataIndex: ["data", "status"],
     },
     {
       title: "Үүсгэсэн",
-      dataIndex: "createdUser",
+      dataIndex: ["data", "createdUser"],
       filters: [...new Set(assessments.map((item) => item.createdUser))].map(
         (user) => ({
           text: user,
@@ -207,14 +226,14 @@ const Assessments = () => {
     },
     {
       title: "Үүсгэсэн огноо",
-      dataIndex: "createdAt",
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      dataIndex: ["data", "createdAt"],
+      sorter: (a, b) => new Date(a.data.createdAt) - new Date(b.data.createdAt),
       render: (date) => new Date(date).toISOString().split("T")[0],
     },
     {
       title: "Шинэчилсэн огноо",
-      dataIndex: "updatedAt",
-      sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
+      dataIndex: ["data", "createdAt"],
+      sorter: (a, b) => new Date(a.data.updatedAt) - new Date(b.data.updatedAt),
       render: (date) => new Date(date).toISOString().split("T")[0],
     },
     {
@@ -238,6 +257,8 @@ const Assessments = () => {
     },
   ];
 
+  console.log("hh", assessments);
+
   return (
     <>
       <Spin tip="Уншиж байна..." fullscreen spinning={loading} />
@@ -251,6 +272,13 @@ const Assessments = () => {
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               allowClear
+            />
+          </div>
+          <div>
+            <Select
+              placeholder="Төрлөөр хайх"
+              suffixIcon={<DropdownIcon width={15} height={15} />}
+              options={[{ name: "Үнэлгээ", value: 1 }]}
             />
           </div>
         </div>
@@ -270,7 +298,7 @@ const Assessments = () => {
           dataSource={filteredAssessments}
           locale={customLocale}
           onRow={(record) => ({
-            onClick: () => router.push(`/test?id=${record.id}`),
+            onClick: () => router.push(`/test?id=${record.data.id}`),
           })}
           className="cursor-pointer"
         />

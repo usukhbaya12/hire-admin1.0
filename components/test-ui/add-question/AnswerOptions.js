@@ -63,7 +63,8 @@ const AnswerOptions = ({
     const newOptions = [...question.answers];
     newOptions[index] = {
       ...newOptions[index],
-      category,
+      category: category.id,
+      categoryName: category.name,
     };
     onUpdate({ answers: newOptions });
   };
@@ -73,6 +74,7 @@ const AnswerOptions = ({
     newOptions[index] = {
       ...newOptions[index],
       category: null,
+      categoryName: null,
     };
     onUpdate({ answers: newOptions });
   };
@@ -107,15 +109,13 @@ const AnswerOptions = ({
         key: "category",
         label: <div className="pl-2 pt-[1px] pr-3">Ангилал тохируулах</div>,
         icon: <PenIcon width={16} />,
-        disabled:
-          !assessmentData?.hasAnswerCategory ||
-          !assessmentData?.categories?.length,
-        children: assessmentData?.categories?.map((category) => ({
-          key: category,
+        disabled: !assessmentData?.data.answerCategories.length > 0,
+        children: assessmentData?.data.answerCategories.map((category) => ({
+          key: category.id,
           label: (
             <div className="flex items-center gap-2">
               <TagIcon width={16} />
-              <span className="font-medium">{category}</span>
+              <span className="font-medium">{category.name}</span>
             </div>
           ),
           onClick: () => handleCategorySelect(category, index),
@@ -262,10 +262,10 @@ const AnswerTypeControl = ({
 
   return (
     <Tooltip
-      title={assessmentData?.type === 10 ? "Зөв хариугаар тэмдэглэх" : ""}
+      title={assessmentData?.data.type === 10 ? "Зөв хариугаар тэмдэглэх" : ""}
     >
       <Control
-        disabled={!assessmentData?.type === 20}
+        disabled={!assessmentData?.data.type === 20}
         checked={option.isCorrect || false}
         onChange={(e) => onChange(index, e.target.checked)}
         className={type === "multiple" ? "pr-2" : ""}
@@ -357,7 +357,7 @@ const AnswerContent = ({
               onClick={() => handleRemoveCategory(index)}
             >
               <TagIcon width={14} />
-              {option.category}
+              {option.categoryName}
             </div>
           </Tooltip>
         )}

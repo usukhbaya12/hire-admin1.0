@@ -143,6 +143,29 @@ export const getAssessmentById = async (id) => {
   }
 };
 
+export const deleteAssessmentById = async (id) => {
+  try {
+    const token = (await cookies()).get("auth-token");
+    const res = await fetch(`${api}assessment/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token?.value ?? ""}`,
+      },
+    }).then((d) => d.json());
+    console.log(res);
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 export const createAssessment = async (values) => {
   const token = (await cookies()).get("auth-token");
   if (!token?.value) return { token: false };
@@ -164,6 +187,7 @@ export const createAssessment = async (values) => {
       level: values.level,
       category: values.category,
       icons: values.icons,
+      answerCategories: values.answerCategories,
     };
     const res = await fetch(`${api}assessment`, {
       method: "POST",
@@ -172,6 +196,32 @@ export const createAssessment = async (values) => {
         Authorization: `Bearer ${token?.value ?? ""}`,
       },
       body: JSON.stringify(body),
+    }).then((d) => d.json());
+
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+export const updateAssessmentById = async (id, values) => {
+  const token = (await cookies()).get("auth-token");
+  if (!token?.value) return { token: false };
+
+  try {
+    const res = await fetch(`${api}assessment/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token?.value ?? ""}`,
+      },
+      body: JSON.stringify(values),
     }).then((d) => d.json());
 
     return {

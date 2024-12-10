@@ -8,7 +8,7 @@ import { TestName } from "./TestName";
 const Questions = ({ assessmentData, onUpdateAssessment }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [localTestName, setLocalTestName] = useState(
-    assessmentData?.name || ""
+    assessmentData?.data.name || ""
   );
   const [blocks, setBlocks] = useState([
     {
@@ -154,10 +154,10 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
   );
 
   useEffect(() => {
-    if (assessmentData?.name) {
-      setLocalTestName(assessmentData.name);
+    if (assessmentData?.data.name) {
+      setLocalTestName(assessmentData.data.name);
     }
-  }, [assessmentData?.name]);
+  }, [assessmentData?.data.name]);
 
   const onTestNameChange = (newName) => {
     setLocalTestName(newName);
@@ -233,6 +233,8 @@ const Questions = ({ assessmentData, onUpdateAssessment }) => {
     window.addEventListener("keydown", handleKeyboard);
     return () => window.removeEventListener("keydown", handleKeyboard);
   }, [blocks, selection, copiedItem, handleSelect]);
+
+  console.log(blocks);
 
   return (
     <div className="flex mt-[98px]">

@@ -2,10 +2,14 @@
 
 import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
-import { Button, Spin } from "antd";
+import { Button, Spin, message } from "antd";
 import { EyeIcon } from "@/components/Icons";
 import Questions from "@/components/test-ui/Questions";
-import { getAssessmentById, getAssessmentCategory } from "../(api)/assessment";
+import {
+  getAssessmentById,
+  getAssessmentCategory,
+  updateAssessmentById,
+} from "../(api)/assessment";
 import { useSearchParams, useRouter } from "next/navigation";
 import Settings from "@/components/test-ui/Settings";
 
@@ -13,8 +17,10 @@ export default function Home() {
   const [assessmentData, setAssessmentData] = useState(null);
   const [assessmentCategories, setAssessmentCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [changes, setChanges] = useState({});
   const params = useSearchParams();
   const router = useRouter();
+  const [messageApi, contextHolder] = message.useMessage();
 
   const fetchData = async () => {
     try {
@@ -39,9 +45,11 @@ export default function Home() {
   }, []);
 
   const handleUpdateAssessment = (updates) => {
-    setAssessmentData((prev) => ({
+    setAssessmentData(updates);
+
+    setChanges((prev) => ({
       ...prev,
-      ...updates,
+      ...updates.data,
     }));
   };
 
@@ -61,7 +69,13 @@ export default function Home() {
     {
       key: "2",
       label: "Тохиргоо",
-      content: <Settings assessmentData={assessmentData} />,
+      content: (
+        <Settings
+          assessmentData={assessmentData}
+          assessmentCategories={assessmentCategories}
+          onUpdateAssessment={handleUpdateAssessment}
+        />
+      ),
     },
     {
       key: "3",
@@ -83,12 +97,30 @@ export default function Home() {
   };
 
   const publish = async () => {
-    console.log("asdf");
-    ъ;
+    try {
+      setLoading(true);
+      const id = params.get("id");
+      if (id) {
+        await updateAssessmentById(id, changes).then((d) => {
+          if (d.success) {
+            messageApi.success("Амжилттай хадгаллаа.", [3]);
+            fetchData();
+            setChanges({});
+          } else {
+            messageApi.error(d.message || "Хадгалахад алдаа гарлаа.");
+          }
+        });
+      }
+    } catch (error) {
+      message.error("Сервертэй холбогдоход алдаа гарлаа.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex flex-col h-screen">
+      {contextHolder}
       <Spin tip="Уншиж байна..." fullscreen spinning={loading} />
       <div className="fixed w-full top-0 z-10 bg-white">
         <Header />
@@ -115,17 +147,19 @@ export default function Home() {
             <div className="mr-2 flex gap-1 items-center bg-bg20 px-2 py-0.5 rounded-lg text-main">
               <div>Сүүлд шинэчилсэн:</div>
               <div>
-                {assessmentData?.updatedAt &&
-                  `${
-                    new Date(assessmentData.updatedAt)
-                      .toISOString()
-                      .slice(5, 16)
-                      .replace("T", " ")
-                      .replace("-", "-")
-                      .split(" ")[0]
-                  }-нд ${new Date(assessmentData.updatedAt)
-                    .toISOString()
-                    .slice(11, 16)}`}
+                {assessmentData?.data.updatedAt &&
+                  (() => {
+                    const date = new Date(assessmentData.data.updatedAt);
+                    date.setHours(date.getHours() + 8);
+                    return `${
+                      date
+                        .toISOString()
+                        .slice(5, 16)
+                        .replace("T", " ")
+                        .replace("-", "-")
+                        .split(" ")[0]
+                    }-нд ${date.toISOString().slice(11, 16)}`;
+                  })()}
               </div>
             </div>
             <Button className="border-main text-main rounded-xl px-4 login mb-0 font-semibold button-2">

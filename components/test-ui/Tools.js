@@ -2,15 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { MenuIcon, DropdownIcon, TagIcon } from "../Icons";
-import {
-  Select,
-  Divider,
-  Collapse,
-  Switch,
-  InputNumber,
-  Input,
-  Form,
-} from "antd";
+import { Select, Divider, Collapse, Switch, InputNumber } from "antd";
 import InfoModal from "../modals/Info";
 
 const questionTypes = [
@@ -453,30 +445,7 @@ const BlockSettings = ({
   assessmentData,
   onUpdateAssessment,
 }) => {
-  const [categoryInput, setCategoryInput] = useState(
-    assessmentData?.categories?.join(", ") || ""
-  );
-  const [categories, setCategories] = useState(
-    assessmentData?.categories || []
-  );
   const [isModalVisible, setIsModalVisible] = useState(false);
-
-  useEffect(() => {
-    if (assessmentData?.categories) {
-      setCategoryInput(assessmentData.categories.join(", "));
-      setCategories(assessmentData.categories);
-    }
-  }, [assessmentData?.categories]);
-
-  const processCategories = (value) => {
-    const categoryArray = value
-      .split(",")
-      .map((category) => category.trim())
-      .filter(Boolean);
-
-    setCategories(categoryArray);
-    onUpdateAssessment({ categories: categoryArray });
-  };
 
   return (
     <div>
@@ -521,44 +490,35 @@ const BlockSettings = ({
               <>
                 <div className="flex items-center gap-2">
                   <Switch
+                    disabled
                     size="small"
-                    checked={assessmentData?.hasAnswerCategory}
+                    checked={assessmentData?.data.answerCategories.length > 0}
                     onChange={(checked) =>
                       checked
                         ? onUpdateAssessment({ hasAnswerCategory: true })
                         : setIsModalVisible(true)
                     }
                   />
-                  <span>Хариултууд ангилалтай юу?</span>
+                  <span className="text-gray-600">
+                    Хариултууд ангилалтай юу?
+                  </span>
                 </div>
-                {assessmentData?.hasAnswerCategory && (
+                {assessmentData?.data.answerCategories.length > 0 && (
                   <div className="pt-3">
                     <div className="font-bold pb-1 pl-1">Ангиллууд</div>
-                    <Form.Item>
-                      <Input
-                        value={categoryInput}
-                        onChange={(e) => setCategoryInput(e.target.value)}
-                        onKeyDown={(e) =>
-                          e.key === "Enter" && processCategories(categoryInput)
-                        }
-                        onBlur={() => processCategories(categoryInput)}
-                        placeholder="Таслалаар хязгаарлан оруулна уу. Жишээ нь: D,I,S,C"
-                        className="category"
-                      />
-                      {categories.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {categories.map((category, index) => (
-                            <div
-                              key={index}
-                              className="bg-blue-100 px-2 py-0.5 gap-2 rounded-md text-sm flex items-center"
-                            >
-                              <TagIcon width={14} />
-                              {category}
-                            </div>
-                          ))}
-                        </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {assessmentData?.data.answerCategories.map(
+                        (category, index) => (
+                          <div
+                            key={index}
+                            className="bg-blue-100 px-2 py-0.5 gap-2 rounded-md text-sm flex items-center"
+                          >
+                            <TagIcon width={14} />
+                            {category.name}
+                          </div>
+                        )
                       )}
-                    </Form.Item>
+                    </div>
                   </div>
                 )}
               </>
