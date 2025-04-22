@@ -182,29 +182,30 @@ const Feedback = () => {
     const isExpanded = expandedCards[group.assessment.id];
     const iconUrl = group.assessment.icons
       ? `${api}file/${group.assessment.icons}`
-      : "/hire-logo.png";
+      : "/placeholder.png";
 
     return (
       <Col xs={24} md={12} lg={8} key={group.assessment.id} className="mb-6">
         <div className="group bg-white backdrop-blur-md overflow-hidden transition-all duration-500 shadow shadow-slate-200 rounded-3xl z-10">
           <div className="flex flex-col gap-3">
-            {group.assessment.icons && (
-              <div className="relative aspect-video overflow-hidden rounded-3xl bg-gray-200 max-h-[220px] min-h-[220px] w-full">
-                <Image
-                  src={
-                    `${api}file/${group.assessment.icons}` || "/hire-logo.png"
-                  }
-                  alt={group.assessment.name}
-                  fill
-                  loading="lazy"
-                  className={`
+            <div className="relative aspect-video overflow-hidden rounded-3xl bg-gray-200 max-h-[220px] min-h-[220px] w-full">
+              <Image
+                src={
+                  group.assessment.icons
+                    ? `${api}file/${group.assessment.icons}`
+                    : "/placeholder.png"
+                }
+                alt={group.assessment.name}
+                fill
+                loading="lazy"
+                className={`
                  object-cover
                  duration-700 
                  max-h-[220px] min-h-[220px]
                `}
-                />
-              </div>
-            )}
+              />
+            </div>
+
             <div className="space-y-3 pb-5 pt-3 px-9">
               <h3 className="font-extrabold text-lg transition-colors duration-500 group-hover:text-main leading-5">
                 {group.assessment.name}

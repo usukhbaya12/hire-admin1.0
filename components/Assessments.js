@@ -336,7 +336,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
           onClick: (e) => {
             e.domEvent.stopPropagation();
             window.open(
-              `/preview?id=${record.data.id}`,
+              `/preview/${record.data.id}`,
               "_blank",
               "noopener,noreferrer"
             );

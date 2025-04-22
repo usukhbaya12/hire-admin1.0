@@ -26,6 +26,7 @@ import {
   changeUserRole,
 } from "@/app/api/constant";
 import {
+  AccessibilityBoldDuotone,
   Buildings2BoldDuotone,
   MagniferBoldDuotone,
   MagniferLineDuotone,
@@ -689,8 +690,8 @@ const Users = () => {
           {activeKey === "3" && (
             <Button
               onClick={() => setAddUserVisible(true)}
-              className="bg-main border-none text-white rounded-xl px-4 login mb-0 font-bold"
-              icon={<PlusIcon width={18} />}
+              className="the-btn"
+              icon={<PlusIcon width={18} color={"#f36421"} />}
             >
               Админ нэмэх
             </Button>
@@ -745,21 +746,28 @@ const Users = () => {
       {/* Add Admin User Modal */}
 
       <Modal
-        title="Админ нэмэх"
+        title={
+          <div className="flex items-center gap-2">
+            <AccessibilityBoldDuotone className="text-main" width={20} />
+            <span>Админ нэмэх</span>
+          </div>
+        }
         open={addUserVisible}
         onCancel={() => {
           form.resetFields();
           setAddUserVisible(false);
         }}
         footer={null}
-        width={500}
+        width={380}
       >
+        <Divider className="modal-div" />
+
         <Form form={form} layout="vertical" onFinish={onAddAdmin}>
-          <div className="p-4">
+          <div>
             <Form.Item
               label="Овог"
               name="lastname"
-              rules={[{ required: true, message: "Овог оруулна уу" }]}
+              rules={[{ required: true, message: "Овог оруулна уу." }]}
             >
               <Input />
             </Form.Item>
@@ -767,17 +775,18 @@ const Users = () => {
             <Form.Item
               label="Нэр"
               name="firstname"
-              rules={[{ required: true, message: "Нэр оруулна уу" }]}
+              rules={[{ required: true, message: "Нэр оруулна уу." }]}
             >
               <Input />
             </Form.Item>
 
             <Form.Item
-              label="И-мэйл"
+              validateTrigger="onFinish"
+              label="И-мейл хаяг"
               name="email"
               rules={[
-                { required: true, message: "И-мэйл оруулна уу" },
-                { type: "email", message: "И-мэйл буруу байна" },
+                { required: true, message: "И-мейл хаяг оруулна уу." },
+                { type: "email", message: "И-мейл хаяг буруу байна." },
               ]}
             >
               <Input />
@@ -786,7 +795,7 @@ const Users = () => {
             <Form.Item
               label="Утасны дугаар"
               name="phone"
-              rules={[{ required: true, message: "Утасны дугаар оруулна уу" }]}
+              rules={[{ required: true, message: "Утасны дугаар оруулна уу." }]}
             >
               <Input />
             </Form.Item>
@@ -794,7 +803,7 @@ const Users = () => {
             <Form.Item
               label="Нууц үг"
               name="password"
-              rules={[{ required: true, message: "Нууц үг оруулна уу" }]}
+              rules={[{ required: true, message: "Нууц үг оруулна уу." }]}
             >
               <Input.Password />
             </Form.Item>
@@ -802,26 +811,22 @@ const Users = () => {
             <Form.Item
               label="Эрх"
               name="role"
-              rules={[{ required: true, message: "Эрх сонгоно уу" }]}
+              rules={[{ required: true, message: "Эрх сонгоно уу." }]}
             >
               <Select options={adminRoles} placeholder="Эрх сонгох" />
             </Form.Item>
 
-            <div className="flex justify-end gap-2 mt-6">
+            <div className="flex gap-3 justify-end mt-6">
               <Button
                 onClick={() => {
                   form.resetFields();
                   setAddUserVisible(false);
                 }}
-                className="back border rounded-xl text-[13px] font-medium"
+                className="back-btn"
               >
                 Цуцлах
               </Button>
-              <Button
-                loading={loading}
-                htmlType="submit"
-                className="border-none rounded-xl font-semibold text-white bg-main"
-              >
+              <Button loading={loading} htmlType="submit" className="the-btn">
                 Нэмэх
               </Button>
             </div>

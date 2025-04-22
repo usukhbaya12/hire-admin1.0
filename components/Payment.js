@@ -145,7 +145,7 @@ const Payment = () => {
         setCurrentPage(page);
       } else {
         messageApi.error(
-          response.message || "Төлбөрийн түүх авахад алдаа гарлаа."
+          response.message || "Сервертэй холбогдоход алдаа гарлаа."
         );
       }
     } catch (error) {

@@ -69,7 +69,9 @@ const Results = () => {
         setTotalCount(response.data.total || 0);
         setCurrentPage(page);
       } else {
-        messageApi.error(response.message || "Үр дүн авахад алдаа гарлаа");
+        messageApi.error(
+          response.message || "Сервертэй холбогдоход алдаа гарлаа."
+        );
       }
     } catch (error) {
       console.error("Error fetching results:", error);
@@ -426,7 +428,7 @@ const Results = () => {
           <Tooltip title="Тайлан татах">
             <button
               onClick={() => generatePDF(record.code)}
-              className="mx-auto text-main hover:text-secondary flex items-center gap-2 font-semibold"
+              className="cursor-pointer mx-auto text-main hover:text-secondary flex items-center gap-2 font-semibold"
             >
               <ClipboardTextBoldDuotone width={18} />
               Татах

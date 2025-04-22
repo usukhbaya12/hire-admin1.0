@@ -642,7 +642,7 @@ const Settings = ({
           >
             <TextArea
               rows={4}
-              maxLength={220}
+              maxLength={240}
               showCount
               onChange={(e) => {
                 form.setFieldsValue({ description: e.target.value });
@@ -695,7 +695,7 @@ const Settings = ({
         <TextArea
           value={assessmentData?.data?.usage}
           rows={4}
-          maxLength={200}
+          maxLength={240}
           showCount
           onChange={(e) => {
             form.setFieldsValue({ usage: e.target.value });
@@ -709,7 +709,7 @@ const Settings = ({
         <TextArea
           value={assessmentData?.data?.measure}
           rows={4}
-          maxLength={200}
+          maxLength={240}
           showCount
           onChange={(e) => {
             form.setFieldsValue({ measure: e.target.value });

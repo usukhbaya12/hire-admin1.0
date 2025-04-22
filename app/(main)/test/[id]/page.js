@@ -489,7 +489,7 @@ export default function Test() {
           </div>
           <Button
             className="back-btn"
-            onClick={() => window.open(`/preview?id=${params.id}`)}
+            onClick={() => window.open(`/preview/${params.id}`)}
           >
             <EyeBoldDuotone />
           </Button>
