@@ -25,6 +25,7 @@ import {
   TrashBin2BoldDuotone,
 } from "solar-icons";
 import { LoadingOutlined } from "@ant-design/icons";
+import OkModal from "./modals/Ok";
 
 const ASSESSMENT_TYPE = {
   TEST: 10,
@@ -110,6 +111,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
   const [deleteModal, setDeleteModal] = useState({ open: false, record: null });
   const [messageApi, contextHolder] = message.useMessage();
   const [isActionLoading, setIsActionLoading] = useState(false);
+  const [featuredLimitModal, setFeaturedLimitModal] = useState({ open: false });
 
   const refreshData = useCallback(async () => {
     setIsActionLoading(true); // Use action loading state
@@ -212,6 +214,20 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
   const handleStatusChange = useCallback(
     async (record, newStatus) => {
       if (!record?.data?.id) return;
+
+      // Check if trying to set as Featured
+      if (newStatus === STATUS.FEATURED) {
+        // Count current featured assessments
+        const featuredCount = assessments.filter(
+          (assessment) => assessment.data.status === STATUS.FEATURED
+        ).length;
+
+        if (featuredCount >= 3) {
+          setFeaturedLimitModal({ open: true });
+          return;
+        }
+      }
+
       setIsActionLoading(true);
 
       try {
@@ -220,7 +236,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         });
         if (response.success) {
           messageApi.success("Төлөв амжилттай өөрчлөгдлөө.");
-          refreshData();
+          await refreshData(); // Use await to ensure data is refreshed before continuing
         } else {
           messageApi.error(response.message || "Төлөв өөрчлөхөд алдаа гарлаа.");
         }
@@ -231,7 +247,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         setIsActionLoading(false);
       }
     },
-    [messageApi]
+    [messageApi, assessments, refreshData]
   );
 
   const handleDelete = useCallback(
@@ -605,6 +621,12 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         handleOk={handleOk}
         handleCancel={handleCancel}
         onCategoryCreate={refreshCategories}
+      />
+      <OkModal
+        open={featuredLimitModal.open}
+        onOk={() => setFeaturedLimitModal({ open: false })}
+        onCancel={() => setFeaturedLimitModal({ open: false })}
+        text="Аль хэдийн 3 тест онцолсон байна. Нэмж тест онцлох боломжгүй."
       />
     </>
   );

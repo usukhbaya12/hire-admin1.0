@@ -738,6 +738,11 @@ const BlogEditor = () => {
               editor={editor}
               className="min-h-[500px] editor-content-area p-2 text-justify text-base!"
             />
+            <style jsx global>{`
+              .editor-content-area .ProseMirror {
+                font-size: 14px !important;
+              }
+            `}</style>
           </div>
         </div>
       )}
