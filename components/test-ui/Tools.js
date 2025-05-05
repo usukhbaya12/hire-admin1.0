@@ -181,7 +181,7 @@ const QuestionSettings = ({ question, onUpdate }) => {
               <InputNumber
                 min={0}
                 max={(parseInt(question.question?.maxValue) || 5) - 1}
-                value={parseInt(question.question?.minValue) || 1}
+                value={parseInt(question.question?.minValue) || 0}
                 onChange={(value) => {
                   onUpdate(question.id, {
                     question: {

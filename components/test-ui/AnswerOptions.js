@@ -333,7 +333,7 @@ const AnswerOptions = ({
   );
 
   const renderSlider = () => {
-    const min = Number(question.question?.minValue) || 1;
+    const min = Number(question.question?.minValue) || 0;
     const max = Number(question.question?.maxValue) || 5;
 
     const getMarks = () => {
