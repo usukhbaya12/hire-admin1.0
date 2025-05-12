@@ -180,6 +180,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     { label: "MBTI", value: 30 },
     { label: "Genos", value: 50 },
     { label: "Нарциссистик", value: 60 },
+    { label: "Сэтгэл гутрал", value: 70 },
   ];
 
   const handleReportTypeChange = (value) => {

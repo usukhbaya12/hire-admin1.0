@@ -316,12 +316,10 @@ const Settings = ({
       let questionCountsUpdated = false;
 
       const hasExistingDurations = blocks.some((block) => block.duration > 0);
-      const hasExistingQuestionCount = blocks.some(
-        (block) => block.questionCount < block.questions.length
-      );
+      const hasSlicedBlocks = blocks.some((block) => block.sliced === true);
 
       setBlockDurationEnabled(hasExistingDurations);
-      setQuestionCountEnabled(hasExistingQuestionCount);
+      setQuestionCountEnabled(hasSlicedBlocks);
 
       blocks.forEach((block) => {
         if (initialDurations[block.id] === undefined) {
@@ -363,7 +361,12 @@ const Settings = ({
       });
       setBlockDurations(resetDurations);
 
-      handleDurationChange(0);
+      const updatedBlocks = blocks.map((block) => ({
+        ...block,
+        duration: 0,
+      }));
+
+      handleFieldChange("duration", 0, updatedBlocks);
     }
   };
 
@@ -392,40 +395,45 @@ const Settings = ({
         0
       );
 
-      handleDurationChange(totalDuration);
+      const updatedBlocks = blocks.map((block) =>
+        block.id === blockId ? { ...block, duration } : block
+      );
+
+      handleFieldChange("duration", totalDuration, updatedBlocks);
     }
   };
 
   const handleQuestionCountToggle = (checked) => {
     setQuestionCountEnabled(checked);
 
-    if (!checked) {
-      const totalQuestions = blocks.reduce(
-        (total, block) => total + (block.questions.length || 0),
-        0
-      );
+    const newBlocks = blocks.map((block) => ({
+      ...block,
+      sliced: checked,
+      questionCount: !checked ? block.questions.length : block.questionCount,
+    }));
 
-      onUpdateAssessment({
-        ...assessmentData,
-        data: {
-          ...assessmentData.data,
-          questionCount: totalQuestions,
-        },
+    setBlocks(newBlocks);
+
+    const newCounts = {};
+    blocks.forEach((block) => {
+      newCounts[block.id] = !checked
+        ? block.questions.length
+        : block.questionCount;
+    });
+    setBlockQuestionCounts(newCounts);
+
+    let totalCount = 0;
+    if (checked) {
+      newBlocks.forEach((block) => {
+        totalCount += block.questionCount;
       });
-
-      setBlocks((prevBlocks) =>
-        prevBlocks.map((block) => ({
-          ...block,
-          questionCount: block.questions.length,
-        }))
-      );
-
-      const resetQuestionCounts = {};
-      blocks?.forEach((block) => {
-        resetQuestionCounts[block.id] = block.questions.length;
+    } else {
+      newBlocks.forEach((block) => {
+        totalCount += block.questions.length;
       });
-      setBlockQuestionCounts(resetQuestionCounts);
     }
+
+    handleFieldChange("questionCount", totalCount, newBlocks);
   };
 
   const handleBlockQuestionCountChange = (blockId, value) => {
@@ -433,9 +441,7 @@ const Settings = ({
 
     setBlocks((prevBlocks) =>
       prevBlocks.map((block) =>
-        block.id === blockId
-          ? { ...block, questionCount: questionCount }
-          : block
+        block.id === blockId ? { ...block, questionCount, sliced: true } : block
       )
     );
 
@@ -444,25 +450,15 @@ const Settings = ({
       [blockId]: questionCount,
     }));
 
-    if (questionCountEnabled) {
-      const updatedQuestionCounts = {
-        ...blockQuestionCounts,
-        [blockId]: questionCount,
-      };
+    const updatedBlocks = blocks.map((block) =>
+      block.id === blockId ? { ...block, questionCount, sliced: true } : block
+    );
+    const totalCount = updatedBlocks.reduce(
+      (total, block) => total + block.questionCount,
+      0
+    );
 
-      const totalQuestions = blocks.reduce(
-        (sum, block) => sum + (updatedQuestionCounts[block.id] || 0),
-        0
-      );
-
-      onUpdateAssessment({
-        ...assessmentData,
-        data: {
-          ...assessmentData.data,
-          questionCount: totalQuestions,
-        },
-      });
-    }
+    handleFieldChange("questionCount", totalCount, updatedBlocks);
   };
 
   const handleDurationChange = (value) => {
@@ -475,15 +471,21 @@ const Settings = ({
     });
   };
 
-  const handleFieldChange = (field, value) => {
+  const handleFieldChange = (field, value, blocksToUpdate = null) => {
     if (onUpdateAssessment) {
-      onUpdateAssessment({
+      const updateObject = {
         ...assessmentData,
         data: {
           ...assessmentData.data,
           [field]: value,
         },
-      });
+      };
+
+      if (blocksToUpdate) {
+        updateObject.blocks = blocksToUpdate;
+      }
+
+      onUpdateAssessment(updateObject);
     }
   };
 

@@ -66,91 +66,96 @@ export default function Test() {
           if (d.success) {
             setAssessmentQuestions(d.data);
             if (d.data && d.data.length > 0) {
-              const transformedBlocks = d.data.map((block) => ({
-                id: block.category.id,
-                name: block.category.name,
-                order: block.category.orderNumber,
-                value: block.category.value || null,
-                duration: block.category.duration || 0,
-                questionCount:
-                  block.category.questionCount || block.questions.length,
-                image: null,
-                hasQuestion: !!block.category.value,
-                isExpanded: true,
-                questions: block.questions
-                  .sort((a, b) => a.orderNumber - b.orderNumber)
-                  .map((question) => {
-                    if (question.type === 40) {
-                      return {
-                        id: question.id,
-                        order: question.orderNumber,
-                        type: question.type,
-                        question: {
-                          name: question.name,
-                          minValue: question.minValue,
-                          maxValue: question.maxValue,
-                          orderNumber: question.orderNumber,
-                          point: question.point || null,
-                          file: question.file,
-                          required: question.required,
-                          slider: question.slider || null,
-                        },
-                        answers: question.answers.map((answerObj) => ({
-                          answer: {
-                            id: answerObj.id,
-                            value: answerObj.value,
-                            point: answerObj.point || 0,
-                            orderNumber: answerObj.orderNumber,
-                            category: answerObj.category || null,
+              const transformedBlocks = d.data.map((block) => {
+                const hasCustomCount =
+                  block.category.questionCount !== block.questions.length;
+                return {
+                  id: block.category.id,
+                  name: block.category.name,
+                  order: block.category.orderNumber,
+                  value: block.category.value || null,
+                  duration: block.category.duration || 0,
+                  questionCount:
+                    block.category.questionCount || block.questions.length,
+                  sliced: hasCustomCount,
+                  image: null,
+                  hasQuestion: !!block.category.value,
+                  isExpanded: true,
+                  questions: block.questions
+                    .sort((a, b) => a.orderNumber - b.orderNumber)
+                    .map((question) => {
+                      if (question.type === 40) {
+                        return {
+                          id: question.id,
+                          order: question.orderNumber,
+                          type: question.type,
+                          question: {
+                            name: question.name,
+                            minValue: question.minValue,
+                            maxValue: question.maxValue,
+                            orderNumber: question.orderNumber,
+                            point: question.point || null,
+                            file: question.file,
+                            required: question.required,
+                            slider: question.slider || null,
                           },
-                          matrix: answerObj.matrix.map((matrixItem) => {
+                          answers: question.answers.map((answerObj) => ({
+                            answer: {
+                              id: answerObj.id,
+                              value: answerObj.value,
+                              point: answerObj.point || 0,
+                              orderNumber: answerObj.orderNumber,
+                              category: answerObj.category || null,
+                            },
+                            matrix: answerObj.matrix.map((matrixItem) => {
+                              return {
+                                id: matrixItem.id,
+                                value: matrixItem.value,
+                                point: matrixItem.point,
+                                category: matrixItem.category || null,
+                                orderNumber: matrixItem.orderNumber,
+                              };
+                            }),
+                          })),
+                          optionCount: question.answers.length,
+                        };
+                      } else {
+                        return {
+                          id: question.id,
+                          order: question.orderNumber,
+                          type: question.type,
+                          question: {
+                            name: question.name,
+                            minValue: question.minValue,
+                            maxValue: question.maxValue,
+                            orderNumber: question.orderNumber,
+                            point: question.point || null,
+                            file: question.file,
+                            required: question.required,
+                            slider: question.slider || null,
+                          },
+                          answers: question.answers.map((answer) => {
                             return {
-                              id: matrixItem.id,
-                              value: matrixItem.value,
-                              point: matrixItem.point,
-                              category: matrixItem.category || null,
-                              orderNumber: matrixItem.orderNumber,
+                              answer: {
+                                id: answer.id,
+                                value: answer.value,
+                                point: answer.point !== null ? answer.point : 0,
+                                orderNumber: answer.orderNumber,
+                                category: answer.category,
+                                ...(question.type === 70 && {
+                                  reverse: answer.reverse || false,
+                                }),
+                                correct: answer.correct || false,
+                                file: answer.file || null,
+                              },
                             };
                           }),
-                        })),
-                        optionCount: question.answers.length,
-                      };
-                    } else {
-                      return {
-                        id: question.id,
-                        order: question.orderNumber,
-                        type: question.type,
-                        question: {
-                          name: question.name,
-                          minValue: question.minValue,
-                          maxValue: question.maxValue,
-                          orderNumber: question.orderNumber,
-                          point: question.point || null,
-                          file: question.file,
-                          required: question.required,
-                          slider: question.slider || null,
-                        },
-                        answers: question.answers.map((answer) => {
-                          return {
-                            answer: {
-                              id: answer.id,
-                              value: answer.value,
-                              point: answer.point !== null ? answer.point : 0,
-                              orderNumber: answer.orderNumber,
-                              category: answer.category,
-                              ...(question.type === 70 && {
-                                reverse: answer.reverse || false,
-                              }),
-                              correct: answer.correct || false,
-                              file: answer.file || null,
-                            },
-                          };
-                        }),
-                        optionCount: question.answers.length,
-                      };
-                    }
-                  }),
-              }));
+                          optionCount: question.answers.length,
+                        };
+                      }
+                    }),
+                };
+              });
               setBlocks(transformedBlocks);
             }
           }
@@ -318,14 +323,17 @@ export default function Test() {
               value: block.value || null,
               duration: 0,
               totalPoint: 0,
-              questionCount: block.questionCount || block.questions.length,
+              questionCount: block.sliced
+                ? block.questionCount
+                : block.questions.length,
+              sliced: block.sliced || false,
               orderNumber: block.order,
               assessment: id,
               url: block.url || null,
             });
 
             if (!blockResponse.success) {
-              messageApi.error("Блок үүсгэхэд алдаа гарлаа");
+              messageApi.error("Блок үүсгэхэд алдаа гарлаа.");
               return;
             }
             blockId = blockResponse.data;
@@ -336,12 +344,15 @@ export default function Test() {
               orderNumber: block.order,
               value: block.value || null,
               url: block.url || null,
-              questionCount: block.questionCount || block.questions.length,
+              questionCount: block.sliced
+                ? block.questionCount
+                : block.questions.length,
+              sliced: block.sliced || false,
               duration: block.duration || 0,
             });
 
             if (!blockResponse.success) {
-              messageApi.error("Блок шинэчлэхэд алдаа гарлаа");
+              messageApi.error("Блок шинэчлэхэд алдаа гарлаа.");
               return;
             }
           }
@@ -399,7 +410,7 @@ export default function Test() {
       setChanges({});
     } catch (error) {
       console.error("Error in publish:", error);
-      messageApi.error("Алдаа гарлаа");
+      messageApi.error("Алдаа гарлаа.");
     } finally {
       setLoadingBtn(false);
     }
