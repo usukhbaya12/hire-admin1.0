@@ -222,7 +222,7 @@ const QuestionSettings = ({ question, onUpdate }) => {
                   const newValue = e.target.value;
                   const maxCommas =
                     (question.question?.maxValue || 5) -
-                    (question.question?.minValue || 1);
+                    (question.question?.minValue || 0);
                   const currentCommas = newValue.split(",").length - 1;
 
                   if (currentCommas <= maxCommas) {

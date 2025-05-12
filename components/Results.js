@@ -397,7 +397,7 @@ const Results = () => {
             return (
               <div className="flex items-center">
                 <div>{record.result.result || "-"}</div>
-                <span className="px-1">•</span>
+                <span className="px-1">/</span>
                 <div>{record.result.value || "-"}</div>
               </div>
             );
@@ -414,6 +414,15 @@ const Results = () => {
           if (record.result && typeof record.result === "object") {
             return <div>{record.result.result || "-"}</div>;
           }
+        } else {
+          return (
+            <div>
+              {record.result &&
+                (record.result.result ? `${record.result.result}` : "") +
+                  (record.result.result && record.result.value ? " / " : "") +
+                  (record.result.value ? `${record.result.value}` : "")}
+            </div>
+          );
         }
 
         return typeof record.result === "string" ? record.result : "-";
