@@ -181,7 +181,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     { label: "Genos", value: 50 },
     { label: "Нарциссистик", value: 60 },
     { label: "Сэтгэл гутрал", value: 70 },
-    { label: "Эмпатик", value: 80 },
+    { label: "Эмпатик харилцаа", value: 80 },
   ];
 
   const handleReportTypeChange = (value) => {
