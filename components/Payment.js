@@ -11,7 +11,7 @@ import {
   ConfigProvider,
   Divider,
 } from "antd";
-import { getPaymentHistory } from "@/app/api/constant";
+import { ebarimt, getPaymentHistory } from "@/app/api/constant";
 import dayjs from "dayjs";
 import mnMN from "antd/lib/locale/mn_MN";
 import {
@@ -27,6 +27,7 @@ import {
 } from "solar-icons";
 import { customLocale } from "@/utils/values";
 import { LoadingOutlined } from "@ant-design/icons";
+import EBarimtModal from "./modals/EBarimt";
 
 const METHODS = {
   BONUS: 1,
@@ -66,6 +67,11 @@ const Payment = () => {
     payment: 0,
   });
   const [messageApi, contextHolder] = message.useMessage();
+
+  const [barimtVisible, setBarimtVisible] = useState(false);
+  const [barimtLoading, setBarimtLoading] = useState(false);
+  const [barimtData, setBarimtData] = useState(null);
+  const [selectedAssessmentName, setSelectedAssessmentName] = useState("");
 
   const totals = useMemo(() => {
     if (!data || !data.totalPrice)
@@ -158,6 +164,29 @@ const Payment = () => {
   useEffect(() => {
     fetchPaymentData(1, pageSize);
   }, []);
+
+  const handleRowClick = async (record) => {
+    if (!record.message) return;
+    const match = record.message.match(/\d+/);
+    const id = match ? parseInt(match[0], 10) : null;
+    if (!id) {
+      messageApi.error("ID олдсонгүй.");
+      return;
+    }
+    setSelectedAssessmentName(record.assessment?.name || "");
+    setBarimtVisible(true);
+    setBarimtLoading(true);
+    setBarimtData(null);
+    try {
+      const res = await ebarimt(id);
+      setBarimtData(res.data || res);
+    } catch (err) {
+      setBarimtData(null);
+      messageApi.error("Баримтын мэдээлэл авахад алдаа гарлаа.");
+    } finally {
+      setBarimtLoading(false);
+    }
+  };
 
   const handleStartDateChange = (date) => {
     setStartDate(date);
@@ -417,6 +446,13 @@ const Payment = () => {
     <ConfigProvider locale={mnMN}>
       <div className="px-5 py-6">
         {contextHolder}
+        <EBarimtModal
+          visible={barimtVisible}
+          onClose={() => setBarimtVisible(false)}
+          loading={barimtLoading}
+          data={barimtData}
+          assessment={selectedAssessmentName}
+        />
         <div className="flex justify-between items-center mb-4">
           <div className="text-base font-bold flex items-center gap-2">
             <MoneyBagBoldDuotone className="text-main" />
@@ -577,6 +613,10 @@ const Payment = () => {
           }}
           onChange={handleTableChange}
           rowKey={(record) => record.id}
+          onRow={(record) => ({
+            onClick: () => handleRowClick(record),
+            style: { cursor: "pointer" },
+          })}
         />
       </div>
     </ConfigProvider>
