@@ -11,7 +11,7 @@ import {
   ConfigProvider,
   Divider,
 } from "antd";
-import { ebarimt, getPaymentHistory } from "@/app/api/constant";
+import { ebarimt, getPaymentHistory, sendEbarimt } from "@/app/api/constant";
 import dayjs from "dayjs";
 import mnMN from "antd/lib/locale/mn_MN";
 import {
@@ -72,6 +72,8 @@ const Payment = () => {
   const [barimtLoading, setBarimtLoading] = useState(false);
   const [barimtData, setBarimtData] = useState(null);
   const [selectedAssessmentName, setSelectedAssessmentName] = useState("");
+  const [selectedBarimtId, setSelectedBarimtId] = useState(null);
+  const [sendEbarimtLoading, setSendEbarimtLoading] = useState(false);
 
   const totals = useMemo(() => {
     if (!data || !data.totalPrice)
@@ -122,11 +124,6 @@ const Payment = () => {
         ? adjustedEndDate.format("YYYY-MM-DD")
         : null;
 
-      console.log(
-        `Fetching data with page: ${page}, pageSize: ${size}, filters:`,
-        filters
-      );
-
       const response = await getPaymentHistory(
         page,
         size,
@@ -174,6 +171,7 @@ const Payment = () => {
       return;
     }
     setSelectedAssessmentName(record.assessment?.name || "");
+    setSelectedBarimtId(id); // <-- set the extracted id
     setBarimtVisible(true);
     setBarimtLoading(true);
     setBarimtData(null);
@@ -240,6 +238,22 @@ const Payment = () => {
 
     // Always fetch when filters change or pagination changes
     fetchPaymentData(pagination.current, pagination.pageSize, newFilters);
+  };
+
+  const handleSendEbarimt = async () => {
+    setSendEbarimtLoading(true);
+    try {
+      const res = await sendEbarimt();
+      if (res && res.success) {
+        messageApi.success("Амжилттай илгээлээ.");
+      } else {
+        messageApi.error(res?.message || "ebarimt руу илгээхэд алдаа гарлаа.");
+      }
+    } catch (e) {
+      messageApi.error("Сервертэй холбогдоход алдаа гарлаа.");
+    } finally {
+      setSendEbarimtLoading(false);
+    }
   };
 
   const assessmentOptions = useMemo(() => {
@@ -449,9 +463,10 @@ const Payment = () => {
         <EBarimtModal
           visible={barimtVisible}
           onClose={() => setBarimtVisible(false)}
-          loading={barimtLoading}
+          loading2={barimtLoading}
           data={barimtData}
           assessment={selectedAssessmentName}
+          barimtId={selectedBarimtId}
         />
         <div className="flex justify-between items-center mb-4">
           <div className="text-base font-bold flex items-center gap-2">
@@ -577,10 +592,20 @@ const Payment = () => {
             </div>
           </div>
         </div>
-        <div className="justify-end text-gray-500 font-bold text-xs pb-4 flex items-center gap-1">
-          <DatabaseBoldDuotone width={14} />
-          {totalCount} өгөгдөл олдсон
+        <div className="flex justify-between items-center pb-4">
+          <Button
+            loading={sendEbarimtLoading}
+            onClick={handleSendEbarimt}
+            className="the-btn pl-2 flex items-center !text-sm"
+          >
+            <img src="/ebarimt.png" width={20}></img>ebarimt руу мэдээлэл илгээх
+          </Button>
+          <div className="justify-end text-gray-500 font-bold text-sm flex items-center gap-1">
+            <DatabaseBoldDuotone width={14} />
+            {totalCount} өгөгдөл олдсон
+          </div>
         </div>
+
         <Table
           columns={columns}
           loading={{

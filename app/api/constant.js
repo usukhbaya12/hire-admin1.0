@@ -611,3 +611,30 @@ export const ebarimt = async (serviceId) => {
     };
   }
 };
+
+export const sendEbarimt = async () => {
+  const token = await getAuthToken();
+  if (!token) return { token: false };
+  try {
+    const res = await fetch(`${api}barimt/send`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }).then((d) => d.json());
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      message: "Сервертэй холбогдоход алдаа гарлаа",
+    };
+  }
+};
