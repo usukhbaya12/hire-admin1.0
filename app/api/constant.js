@@ -552,3 +552,89 @@ export const getContact = async () => {
     };
   }
 };
+
+export const deleteBarimtById = async (id) => {
+  try {
+    const token = await getAuthToken();
+    if (!token) return { token: false };
+    const res = await fetch(`${api}userService/ebarimt/${id}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }).then((d) => d.json());
+
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      message: "Сервертэй холбогдоход алдаа гарлаа.",
+    };
+  }
+};
+
+export const ebarimt = async (serviceId) => {
+  try {
+    const token = await getAuthToken();
+    if (!token) return { token: false };
+
+    const response = await fetch(`${api}userService/ebarimt/${serviceId}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const result = await response.json();
+
+    return {
+      data: result.payload,
+      token: true,
+      message: result.message,
+      status: result.status,
+      success: result.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      message: "Сервертэй холбогдоход алдаа гарлаа.",
+    };
+  }
+};
+
+export const sendEbarimt = async () => {
+  const token = await getAuthToken();
+  if (!token) return { token: false };
+  try {
+    const res = await fetch(`${api}barimt/send`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }).then((d) => d.json());
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      message: "Сервертэй холбогдоход алдаа гарлаа",
+    };
+  }
+};
