@@ -11,10 +11,15 @@ import {
   Card,
   Divider,
   Input,
+  Upload,
 } from "antd";
 import { PlusIcon, DropdownIcon, MenuIcon } from "./Icons";
 import { updateAssessmentById } from "@/app/api/assessment";
-import { createNewFormula, getFormula } from "@/app/api/constant";
+import {
+  createNewFormula,
+  getFormula,
+  imageUploader,
+} from "@/app/api/constant";
 import FormulaExample from "./Formula";
 import {
   CalculatorBoldDuotone,
@@ -24,6 +29,8 @@ import {
   TagLineDuotone,
   TrashBin2BoldDuotone,
 } from "solar-icons";
+import { InboxOutlined } from "@ant-design/icons";
+const { Dragger } = Upload;
 
 const Report = ({ assessmentData, onUpdateAssessment }) => {
   const [selected, setSelected] = useState("formula");
@@ -45,6 +52,12 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     assessmentData?.data?.report || null
   );
   const [hasFormula, setHasFormula] = useState(!!assessmentData?.data?.formule);
+  const [hasReport, setHasReport] = useState(
+    !!assessmentData?.data?.exampleReport
+  );
+
+  const [uploading, setUploading] = useState(false);
+  const [fileList, setFileList] = useState([]);
 
   useEffect(() => {
     const fetchFormulaData = async () => {
@@ -55,7 +68,6 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
           const response = await getFormula(assessmentData.data.formule);
 
           if (response.success && response.data) {
-            // Set aggregations
             if (
               response.data.aggregations &&
               response.data.aggregations.length > 0
@@ -70,7 +82,6 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
               setAggregations([{ field: "point", operation: "sum" }]);
             }
 
-            // Set filters
             const filterEntries = Object.entries(response.data.filters);
             if (filterEntries.length > 0) {
               setFilters(
@@ -171,6 +182,110 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     const newFilters = [...filters];
     newFilters[index].value = value;
     setFilters(newFilters);
+  };
+
+  const handleChange = async (info) => {
+    let newFileList = [...info.fileList];
+    newFileList = newFileList.slice(-1);
+    setFileList(newFileList);
+
+    if (info.file.status === "uploading") {
+      setUploading(true);
+      return;
+    }
+
+    if (info.file.status === "done") {
+      try {
+        const formData = new FormData();
+        formData.append("files", info.file.originFileObj);
+        const res = await imageUploader(formData);
+
+        console.log("a", formData);
+        console.log("Upload response:", res);
+
+        if (res && res[0]) {
+          if (assessmentData?.data?.id) {
+            handleFieldChange("exampleReport", res[0]);
+          } else {
+            setHasReport(true);
+            messageApi.success("Жишиг тайлан амжилттай илгээгдлээ");
+          }
+        }
+      } catch (error) {
+        console.error("Upload error:", error);
+        messageApi.error("Файл илгээхэд алдаа гарлаа");
+      } finally {
+        setUploading(false);
+      }
+    }
+
+    if (info.file.status === "error") {
+      messageApi.error("Файл илгээхэд алдаа гарлаа");
+      setUploading(false);
+    }
+  };
+
+  const handleRemove = async (file) => {
+    try {
+      if (assessmentData?.data?.id) {
+        const updateResponse = await updateAssessmentById(
+          assessmentData.data.id,
+          {
+            exampleReport: null,
+          }
+        );
+
+        if (updateResponse?.success) {
+          setHasReport(false);
+
+          // Update the assessment data in parent component
+          onUpdateAssessment({
+            ...assessmentData,
+            data: {
+              ...assessmentData.data,
+              exampleReport: null,
+            },
+          });
+
+          messageApi.success("Жишиг тайлан устгагдлаа");
+        } else {
+          throw new Error("Failed to update assessment");
+        }
+      } else {
+        setHasReport(false);
+      }
+
+      setFileList([]);
+    } catch (error) {
+      console.error("Remove error:", error);
+      messageApi.error("Файл устгахад алдаа гарлаа");
+    }
+  };
+
+  // Initialize file list from existing data
+  useEffect(() => {
+    if (assessmentData?.data?.exampleReport) {
+      setHasReport(true);
+      setFileList([
+        {
+          uid: "-1",
+          name: assessmentData.data.exampleReport,
+          status: "done",
+          url: `${api}download/${assessmentData.data.exampleReport}`, // Adjust URL as needed
+        },
+      ]);
+    } else {
+      setHasReport(false);
+      setFileList([]);
+    }
+  }, [assessmentData?.data?.exampleReport]);
+
+  const beforeUpload = (file) => {
+    const isPdf = file.type === "application/pdf";
+    if (!isPdf) {
+      messageApi.error("Зөвхөн PDF файл сонгоно уу.");
+    }
+    return isPdf || Upload.LIST_IGNORE;
   };
 
   const reportMapping = [
@@ -283,6 +398,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
           Тооцоолол
         </div>
         <div
+          onClick={() => setSelected("formula")}
           className={`px-8 py-3 hover:bg-gray-100 cursor-pointer ${
             selected === "formula" ? "bg-gray-100" : ""
           }`}
@@ -291,6 +407,15 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
           <div className="text-[13px] pb-0.5">
             Үр дүн тооцоолох аргачлал тохируулах
           </div>
+        </div>
+        <div
+          onClick={() => setSelected("example")}
+          className={`px-8 py-3 hover:bg-gray-100 cursor-pointer ${
+            selected === "example" ? "bg-gray-100" : ""
+          }`}
+        >
+          <div className="font-bold">Жишиг тайлан</div>
+          <div className="text-[13px] pb-0.5">Жишиг тайлан оруулах</div>
         </div>
       </div>
 
@@ -580,6 +705,49 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                     sortEnabled={sortEnabled}
                     sortValue={sortValue}
                   />
+                </div>
+              </div>
+            </div>
+            <div className={selected === "example" ? "" : "hidden"}>
+              <div className="mb-4">
+                <div className="font-bold text-xl rounded-md">
+                  {assessmentData?.data?.name}
+                </div>
+                <div
+                  className={`${
+                    hasReport ? "text-green-600" : "text-orange-500"
+                  } font-bold`}
+                >
+                  {hasReport
+                    ? "Жишиг тайлан оруулсан байна."
+                    : "Жишиг тайлан оруулаагүй байна."}
+                </div>
+                <div className="mt-4 w-1/2">
+                  <Dragger
+                    beforeUpload={beforeUpload}
+                    accept=".pdf"
+                    maxCount={1}
+                    showUploadList={{
+                      showRemoveIcon: true,
+                      showDownloadIcon: true, // Enable download for existing files
+                    }}
+                    fileList={fileList}
+                    onChange={handleChange}
+                    onRemove={handleRemove}
+                    disabled={uploading}
+                    style={{ marginBottom: 16, borderRadius: "16px" }}
+                  >
+                    <p className="ant-upload-drag-icon">
+                      <InboxOutlined />
+                    </p>
+                    <p className="ant-upload-text">
+                      {uploading ? "Илгээж байна..." : "Жишиг тайлан оруулах"}
+                    </p>
+                    <p className="ant-upload-hint">
+                      Зөвхөн PDF өргөтгөлтэй файлыг энд дарж эсвэл чирж оруулна
+                      уу.
+                    </p>
+                  </Dragger>
                 </div>
               </div>
             </div>
