@@ -30,6 +30,7 @@ import {
   TrashBin2BoldDuotone,
 } from "solar-icons";
 import { InboxOutlined } from "@ant-design/icons";
+import { api } from "@/utils/routes";
 const { Dragger } = Upload;
 
 const Report = ({ assessmentData, onUpdateAssessment }) => {
@@ -205,22 +206,26 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
 
         if (res && res[0]) {
           if (assessmentData?.data?.id) {
-            handleFieldChange("exampleReport", res[0]);
-          } else {
-            setHasReport(true);
-            messageApi.success("Жишиг тайлан амжилттай илгээгдлээ");
+            onUpdateAssessment({
+              ...assessmentData,
+              data: {
+                ...assessmentData.data,
+                exampleReport: res[0],
+              },
+            });
+            messageApi.success("Файл уншсан. Хадгалах товч дарна уу.");
           }
         }
       } catch (error) {
         console.error("Upload error:", error);
-        messageApi.error("Файл илгээхэд алдаа гарлаа");
+        messageApi.error("Файл оруулахад алдаа гарлаа.");
       } finally {
         setUploading(false);
       }
     }
 
     if (info.file.status === "error") {
-      messageApi.error("Файл илгээхэд алдаа гарлаа");
+      messageApi.error("Файл оруулахад алдаа гарлаа.");
       setUploading(false);
     }
   };
@@ -238,7 +243,6 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
         if (updateResponse?.success) {
           setHasReport(false);
 
-          // Update the assessment data in parent component
           onUpdateAssessment({
             ...assessmentData,
             data: {
@@ -247,7 +251,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
             },
           });
 
-          messageApi.success("Жишиг тайлан устгагдлаа");
+          messageApi.success("Устсан. Хадгалах товч дарна уу.");
         } else {
           throw new Error("Failed to update assessment");
         }
@@ -258,11 +262,10 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
       setFileList([]);
     } catch (error) {
       console.error("Remove error:", error);
-      messageApi.error("Файл устгахад алдаа гарлаа");
+      messageApi.error("Файл устгахад алдаа гарлаа.");
     }
   };
 
-  // Initialize file list from existing data
   useEffect(() => {
     if (assessmentData?.data?.exampleReport) {
       setHasReport(true);
@@ -271,7 +274,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
           uid: "-1",
           name: assessmentData.data.exampleReport,
           status: "done",
-          url: `${api}download/${assessmentData.data.exampleReport}`, // Adjust URL as needed
+          url: `${api}file/${assessmentData.data.exampleReport}`,
         },
       ]);
     } else {
@@ -729,7 +732,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                     maxCount={1}
                     showUploadList={{
                       showRemoveIcon: true,
-                      showDownloadIcon: true, // Enable download for existing files
+                      showDownloadIcon: true,
                     }}
                     fileList={fileList}
                     onChange={handleChange}
@@ -740,10 +743,10 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                     <p className="ant-upload-drag-icon">
                       <InboxOutlined />
                     </p>
-                    <p className="ant-upload-text">
-                      {uploading ? "Илгээж байна..." : "Жишиг тайлан оруулах"}
+                    <p className="font-semibold">
+                      {uploading ? "Уншиж байна..." : "Жишиг тайлан оруулах"}
                     </p>
-                    <p className="ant-upload-hint">
+                    <p className="ant-upload-hint text-sm leading-4 mt-2">
                       Зөвхөн PDF өргөтгөлтэй файлыг энд дарж эсвэл чирж оруулна
                       уу.
                     </p>

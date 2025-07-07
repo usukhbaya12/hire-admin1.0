@@ -42,7 +42,7 @@ export async function imageUploader(images) {
       body: images,
     }).then((d) => d.json());
     images.delete("files");
-    return res.payload.file;
+    return res.payload.files;
   } catch (error) {
     console.log(error);
     return false;
