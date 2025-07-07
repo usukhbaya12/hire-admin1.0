@@ -376,8 +376,13 @@ const Payment = () => {
               </div>
             )}
             {displayMethod === METHODS.QPAY && (
-              <div>
+              <div className="flex items-center gap-4">
                 <img src="/qpay.png" alt="qpay" width="40px"></img>
+                <span>•</span>
+                <button className="cursor-pointer mx-auto text-red-500 hover:text-secondary flex items-center gap-2 font-semibold">
+                  <img src="/ebarimt.png" alt="ebarimt" width="20px"></img>
+                  Устгах
+                </button>
               </div>
             )}
             {displayMethod === METHODS.BANK && (
