@@ -442,7 +442,7 @@ export const createBlog = async (values) => {
       category: values.category,
       pinned: values.pinned,
     };
-    const res = await fetch(`${api}blog`, {
+    const res = await fetch(`${api}blog/create`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

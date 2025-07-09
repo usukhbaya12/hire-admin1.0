@@ -641,17 +641,27 @@ const Settings = ({
           <Form.Item
             name="description"
             validateTrigger={["onBlur", "onChange"]}
+            rules={[
+              {
+                min: 140,
+                message: "140-с дээш тэмдэгт оруулна уу.",
+              },
+            ]}
           >
             <TextArea
               rows={4}
               maxLength={240}
               showCount
               onChange={(e) => {
-                form.setFieldsValue({ description: e.target.value });
-                handleFieldChange("description", e.target.value);
+                const value = e.target.value;
+                if (value.length >= 140) {
+                  form.setFieldsValue({ description: value });
+                  handleFieldChange("description", value);
+                }
               }}
             />
           </Form.Item>
+
           {/* <TextArea
             rows={4}
             value={assessmentData?.data.description}
