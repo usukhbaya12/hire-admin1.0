@@ -41,7 +41,7 @@ const GIP = localFont({
 });
 
 export const metadata = {
-  title: "Hire.mn - Админ",
+  title: "Hire / Админ",
   description: "Powered by Axiom Inc.",
 };
 

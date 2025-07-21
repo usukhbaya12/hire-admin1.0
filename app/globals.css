@@ -659,3 +659,12 @@ textarea.ant-input {
   margin-bottom: 32px !important;
   margin-left: -12px !important;
 }
+
+.arc-spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 5px solid rgba(243, 100, 33, 0.2);
+  border-top-color: #f36421;
+  animation: spin 1s linear infinite;
+}
