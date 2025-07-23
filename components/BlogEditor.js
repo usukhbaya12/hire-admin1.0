@@ -165,7 +165,9 @@ const useUploader = (messageApi) => {
     if (isVideo && file.size > sizeLimit) {
       messageApi.error("5MB-с ихгүй хэмжээтэй бичлэг оруулна уу.");
       return null;
-    } else {
+    }
+
+    if (file.size > 1024 * 1024) {
       messageApi.error("1MB-с ихгүй хэмжээтэй зураг оруулна уу.");
       return null;
     }
