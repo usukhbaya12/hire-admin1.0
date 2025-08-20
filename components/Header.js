@@ -77,12 +77,7 @@ const Header = () => {
         <div className="px-9 mx-auto py-3 flex items-center justify-between">
           <div className="flex items-center gap-8">
             <Link href={"/"} className="flex items-center">
-              <Image
-                src="/hire-logo.png"
-                width={80}
-                height={24}
-                alt="Hire Logo"
-              />
+              <Image src="/hire-2.png" width={80} height={24} alt="Hire Logo" />
             </Link>
 
             {/* <nav className="hidden md:flex items-center space-x-1">

@@ -56,7 +56,7 @@ export default function Signin() {
           <div className="relative z-10 p-12 flex flex-col h-full">
             <div>
               <Image
-                src="/hire-white.png"
+                src="/hire-2-white.png"
                 width={100}
                 height={40}
                 alt="Hire logo"
@@ -160,7 +160,7 @@ export default function Signin() {
 
             <div className="text-center mt-24 md:hidden">
               <Image
-                src="/hire-white.png"
+                src="/hire-2-white.png"
                 width={80}
                 height={26}
                 alt="Hire logo"
