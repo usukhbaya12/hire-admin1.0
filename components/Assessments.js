@@ -114,9 +114,8 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
   const [featuredLimitModal, setFeaturedLimitModal] = useState({ open: false });
 
   const refreshData = useCallback(async () => {
-    setIsActionLoading(true); // Use action loading state
+    setIsActionLoading(true);
     try {
-      // Example: Re-fetch assessments only
       const assessmentsRes = await getAssessments();
       if (assessmentsRes.success) {
         const sortedAssessments = (assessmentsRes.data?.res || []).sort(
@@ -128,7 +127,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
       } else {
         messageApi.error(assessmentsRes.message || "Алдаа гарлаа.");
       }
-      // Optionally re-fetch categories if they can change
     } catch (error) {
       messageApi.error("Сервертэй холбогдоход алдаа гарлаа.");
     } finally {
@@ -137,7 +135,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
   }, [messageApi]);
 
   const refreshCategories = useCallback(async () => {
-    // No need for loading state here unless you want one specifically for category refresh
     try {
       const categoriesRes = await getAssessmentCategory();
       if (categoriesRes.success) {
@@ -365,8 +362,11 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
               <CopyBoldDuotone width={18} /> Хувилах
             </div>
           ),
-          onClick: (e) => e.domEvent.stopPropagation(),
-          disabled: true,
+          onClick: (e) => {
+            e.domEvent.stopPropagation();
+            handleCopyClick(record);
+          },
+          // disabled: true,
         },
         {
           key: "delete",
@@ -546,7 +546,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
           deleteModal.record?.data?.name || "Сонгосон тест"
         }-ийг устгах гэж байна. Итгэлтэй байна уу? Энэ үйлдлийг сэргээх боломжгүй.`}
       />
-
       <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
         <div className="flex gap-4 flex-wrap">
           <Input
@@ -584,7 +583,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
           Тест үүсгэх
         </Button>
       </div>
-
       <div className="pt-2">
         <Table
           columns={columns}
@@ -614,7 +612,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
           scroll={{ x: "max-content" }}
         />
       </div>
-
       <NewAssessment
         assessmentCategories={categories}
         isModalOpen={isModalOpen}

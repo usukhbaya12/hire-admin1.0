@@ -186,7 +186,7 @@ const Settings = ({
       : null;
   });
 
-  const limit = 500;
+  const limit = 1000;
 
   const editor = useEditor({
     extensions: [
@@ -765,7 +765,7 @@ const Settings = ({
                 </BubbleMenu>
                 <div className="border-b border-neutral py-2 px-4 bg-neutral/20 flex justify-end">
                   <div className="text-gray-500 text-sm">
-                    {editor.storage.characterCount.characters()}/500 тэмдэгт •{" "}
+                    {editor.storage.characterCount.characters()}/1000 тэмдэгт •{" "}
                     {editor.storage.characterCount.words()} үг
                   </div>
                 </div>
