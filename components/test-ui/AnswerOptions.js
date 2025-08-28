@@ -41,29 +41,63 @@ const AnswerOptions = ({
 
     input.onchange = async (e) => {
       const file = e.target.files?.[0];
-      if (file) {
-        try {
-          const formData = new FormData();
-          formData.append("files", file);
+      if (!file) return;
 
-          const uploadedImages = await imageUploader(formData);
-          if (uploadedImages && uploadedImages.length > 0) {
-            const imageUrl = `${api}file/${uploadedImages[0]}`;
+      // Check file size (1MB limit)
+      const maxSize = 1024 * 1024; // 1MB
+      if (file.size > maxSize) {
+        messageApi.error("1MB-с ихгүй хэмжээтэй зураг оруулна уу.");
+        return;
+      }
 
-            const newOptions = [...question.answers];
-            newOptions[index].answer.file = imageUrl;
-            onUpdate({ answers: newOptions });
-          }
-        } catch (error) {
-          console.error("Error uploading image:", error);
-          messageApi.error("Зураг оруулахад алдаа гарлаа.");
+      // Check file type
+      if (!file.type.startsWith("image/")) {
+        messageApi.error("Зөвхөн зургийн файл оруулна уу.");
+        return;
+      }
+
+      messageApi.loading({
+        content: "Зураг оруулж байна...",
+        key: `option-upload-${index}`,
+        duration: 0,
+      });
+
+      try {
+        const formData = new FormData();
+        formData.append("files", file);
+
+        const uploadedImages = await imageUploader(formData);
+
+        if (
+          uploadedImages &&
+          Array.isArray(uploadedImages) &&
+          uploadedImages.length > 0
+        ) {
+          const fileId = uploadedImages[0];
+          const imageUrl = `${api}file/${fileId}`;
+
+          const newOptions = [...question.answers];
+          newOptions[index].answer.file = imageUrl;
+          onUpdate({ answers: newOptions });
+
+          messageApi.success({
+            content: "Зураг амжилттай оруулагдлаа.",
+            key: `option-upload-${index}`,
+          });
+        } else {
+          throw new Error("Upload failed to return a valid ID.");
         }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        messageApi.error({
+          content: `Зураг оруулахад алдаа гарлаа: ${error.message}`,
+          key: `option-upload-${index}`,
+        });
       }
     };
 
     input.click();
   };
-
   const handleOptionChange = (index, changes) => {
     const newOptions = [...question.answers];
     newOptions[index].answer = {

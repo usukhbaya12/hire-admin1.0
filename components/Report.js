@@ -197,28 +197,49 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
 
     if (info.file.status === "done") {
       try {
+        if (!info.file.originFileObj) {
+          throw new Error("No file found");
+        }
+
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (info.file.originFileObj.size > maxSize) {
+          messageApi.error("Файлын хэмжээ 10MB-аас их байна.");
+          setUploading(false);
+          return;
+        }
+
         const formData = new FormData();
         formData.append("files", info.file.originFileObj);
+
+        console.log("Uploading file:", info.file.originFileObj.name);
+
         const res = await imageUploader(formData);
 
-        console.log("a", formData);
-        console.log("Upload response:", res);
+        if (res === false) {
+          throw new Error("Upload failed on server");
+        }
 
-        if (res && res[0]) {
+        if (res && Array.isArray(res) && res.length > 0) {
+          const uploadedFile = res[0]; // First uploaded file
+
           if (assessmentData?.data?.id) {
             onUpdateAssessment({
               ...assessmentData,
               data: {
                 ...assessmentData.data,
-                exampleReport: res[0],
+                exampleReport: uploadedFile, // Use the uploaded file object
               },
             });
             messageApi.success("Файл уншсан. Хадгалах товч дарна уу.");
           }
+        } else if (res && res.length === 0) {
+          throw new Error("No files were uploaded");
+        } else {
+          throw new Error("Invalid upload response format");
         }
       } catch (error) {
         console.error("Upload error:", error);
-        messageApi.error("Файл оруулахад алдаа гарлаа.");
+        messageApi.error(`Файл оруулахад алдаа гарлаа: ${error.message}`);
       } finally {
         setUploading(false);
       }
@@ -300,6 +321,11 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     { label: "Нарциссистик", value: 60 },
     { label: "Сэтгэл гутрал", value: 70 },
     { label: "Эмпатик", value: 80 },
+    { label: "Хар гурвал", value: 90 },
+    { label: "Холланд", value: 100 },
+    { label: "Burnout", value: 110 },
+    { label: "Үндсэн 5", value: 120 },
+    { label: "Үл ойлголцол", value: 130 },
   ];
 
   const handleReportTypeChange = (value) => {

@@ -160,14 +160,15 @@ const IconRedo = () => <UndoRightRoundBold width={20} />;
 const useUploader = (messageApi) => {
   const upload = async (file, type = "image") => {
     const isVideo = type === "video";
-    const sizeLimit = 5 * 1024 * 1024;
+    const videoSizeLimit = 5 * 1024 * 1024; // 5MB
+    const imageSizeLimit = 1024 * 1024; // 1MB
 
-    if (isVideo && file.size > sizeLimit) {
+    if (isVideo && file.size > videoSizeLimit) {
       messageApi.error("5MB-с ихгүй хэмжээтэй бичлэг оруулна уу.");
       return null;
     }
 
-    if (file.size > 1024 * 1024) {
+    if (!isVideo && file.size > imageSizeLimit) {
       messageApi.error("1MB-с ихгүй хэмжээтэй зураг оруулна уу.");
       return null;
     }
@@ -212,7 +213,6 @@ const useUploader = (messageApi) => {
   };
   return { upload };
 };
-
 const MenuBar = ({ editor, onUpload }) => {
   if (!editor) return null;
 

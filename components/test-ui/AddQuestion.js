@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef } from "react";
-import { Button, Tooltip } from "antd";
+import { Button, Tooltip, message } from "antd";
 import QuestionEditor from "./QuestionEditor";
 import AnswerOptions from "./AnswerOptions";
 import { useSortable } from "@dnd-kit/sortable";
@@ -24,9 +24,11 @@ const AddQuestion = ({
   assessmentData,
 }) => {
   const [editingOptionIndex, setEditingOptionIndex] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const imageUploadRef = useRef({
     setInsertImage: () => {},
   });
+  const [messageApi, contextHolder] = message.useMessage();
 
   const {
     attributes,
@@ -63,39 +65,84 @@ const AddQuestion = ({
 
   const handleImageUpload = async (e) => {
     e.stopPropagation();
+
+    if (uploading) {
+      messageApi.warning("Зураг оруулж байна. Түр хүлээнэ үү.");
+      return;
+    }
+
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
 
     input.onchange = async (e) => {
       const file = e.target.files?.[0];
-      if (file) {
-        try {
-          const formData = new FormData();
-          formData.append("files", file);
+      if (!file) return;
 
-          const uploadedImages = await imageUploader(formData);
-          if (uploadedImages && uploadedImages[0]) {
-            const imageUrl = `${api}file/${uploadedImages[0]}`;
+      // Check file size (2MB limit)
+      const maxSize = 2 * 1024 * 1024; // 2MB
+      if (file.size > maxSize) {
+        messageApi.error("2MB-с ихгүй хэмжээтэй зураг оруулна уу.");
+        return;
+      }
 
-            // Insert image using the function from QuestionEditor
-            if (
-              imageUploadRef.current &&
-              typeof imageUploadRef.current.setInsertImage === "function"
-            ) {
-              imageUploadRef.current.setInsertImage(imageUrl);
-            }
+      // Check file type
+      if (!file.type.startsWith("image/")) {
+        messageApi.error("Зөвхөн зургийн файл оруулна уу.");
+        return;
+      }
 
-            onUpdate({
-              question: {
-                ...question.question,
-                file: uploadedImages[0],
-              },
-            });
+      setUploading(true);
+      messageApi.loading({
+        content: "Зураг оруулж байна...",
+        key: "image-upload",
+        duration: 0,
+      });
+
+      try {
+        const formData = new FormData();
+        formData.append("files", file);
+
+        const uploadedImages = await imageUploader(formData);
+
+        if (
+          uploadedImages &&
+          Array.isArray(uploadedImages) &&
+          uploadedImages.length > 0
+        ) {
+          const fileId = uploadedImages[0];
+          const imageUrl = `${api}file/${fileId}`;
+
+          // Insert image using the function from QuestionEditor
+          if (
+            imageUploadRef.current &&
+            typeof imageUploadRef.current.setInsertImage === "function"
+          ) {
+            imageUploadRef.current.setInsertImage(imageUrl);
           }
-        } catch (error) {
-          console.error("Error uploading image:", error);
+
+          onUpdate({
+            question: {
+              ...question.question,
+              file: fileId,
+            },
+          });
+
+          messageApi.success({
+            content: "Зураг амжилттай оруулагдлаа.",
+            key: "image-upload",
+          });
+        } else {
+          throw new Error("Upload failed to return a valid ID.");
         }
+      } catch (error) {
+        console.error("Error uploading image:", error);
+        messageApi.error({
+          content: `Зураг оруулахад алдаа гарлаа: ${error.message}`,
+          key: "image-upload",
+        });
+      } finally {
+        setUploading(false);
       }
     };
 
@@ -103,79 +150,84 @@ const AddQuestion = ({
   };
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={`p-6 border rounded-3xl mt-6 mb-6 pb-7 pl-8 pr-8 pt-8 relative ${
-        selected
-          ? "border-main shadow-md shadow-slate-200"
-          : "border-neutral hover:border-main/30"
-      } ${isDragging ? "z-50" : ""}`}
-      onClick={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onSelect();
-      }}
-    >
-      <div className="flex justify-between items-start gap-4">
-        <div
-          {...attributes}
-          {...listeners}
-          className="cursor-move absolute left-5 top-1/2 -translate-y-1/2 text-xl text-bold text-gray-400 hover:text-gray-600"
-        >
-          ⣿
+    <>
+      {contextHolder}
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`p-6 border rounded-3xl mt-6 mb-6 pb-7 pl-8 pr-8 pt-8 relative ${
+          selected
+            ? "border-main shadow-md shadow-slate-200"
+            : "border-neutral hover:border-main/30"
+        } ${isDragging ? "z-50" : ""}`}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onSelect();
+        }}
+      >
+        <div className="flex justify-between items-start gap-4">
+          <div
+            {...attributes}
+            {...listeners}
+            className="cursor-move absolute left-5 top-1/2 -translate-y-1/2 text-xl text-bold text-gray-400 hover:text-gray-600"
+          >
+            ⣿
+          </div>
+
+          <QuestionEditor
+            initialContent={question.question.name}
+            onUpdate={handleQuestionUpdate}
+            orderNumber={question.order}
+            posted={typeof question.id !== "string"}
+            question={question}
+            onImageUpload={imageUploadRef}
+          />
+
+          <div className="flex flex-col gap-0.5">
+            <Tooltip title="Зураг оруулах">
+              <Button
+                onClick={handleImageUpload}
+                loading={uploading}
+                disabled={uploading}
+                className="text-blue-500! hover:rounded-full!"
+                type="text"
+                icon={!uploading && <GalleryCircleBoldDuotone width={18} />}
+              />
+            </Tooltip>
+            <Tooltip title="Асуулт хувилах">
+              <Button
+                onClick={handleCopy}
+                className="text-blue-400! hover:rounded-full!"
+                type="text"
+                icon={<CopyBoldDuotone width={18} height={18} />}
+              />
+            </Tooltip>
+            <Tooltip title="Асуулт устгах">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+                className="text-red-500! hover:rounded-full! flex-shrink-0"
+                type="text"
+                icon={<TrashBin2BoldDuotone width={18} />}
+              />
+            </Tooltip>
+          </div>
         </div>
 
-        <QuestionEditor
-          initialContent={question.question.name}
-          onUpdate={handleQuestionUpdate}
-          orderNumber={question.order}
-          posted={typeof question.id !== "string"}
-          question={question}
-          onImageUpload={imageUploadRef}
-        />
-
-        <div className="flex flex-col gap-0.5">
-          <Tooltip title="Зураг оруулах">
-            <Button
-              onClick={handleImageUpload}
-              className="text-blue-500! hover:rounded-full!"
-              type="text"
-              icon={<GalleryCircleBoldDuotone width={18} />}
-            />
-          </Tooltip>
-          <Tooltip title="Асуулт хувилах">
-            <Button
-              onClick={handleCopy}
-              className="text-blue-400! hover:rounded-full!"
-              type="text"
-              icon={<CopyBoldDuotone width={18} height={18} />}
-            />
-          </Tooltip>
-          <Tooltip title="Асуулт устгах">
-            <Button
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              className="text-red-500! hover:rounded-full! flex-shrink-0"
-              type="text"
-              icon={<TrashBin2BoldDuotone width={18} />}
-            />
-          </Tooltip>
+        <div className="pt-4 pl-20 pr-2">
+          <AnswerOptions
+            question={question}
+            onUpdate={handleAnswersUpdate}
+            assessmentData={assessmentData}
+            editingOptionIndex={editingOptionIndex}
+            setEditingOptionIndex={setEditingOptionIndex}
+          />
         </div>
       </div>
-
-      <div className="pt-4 pl-20 pr-2">
-        <AnswerOptions
-          question={question}
-          onUpdate={handleAnswersUpdate}
-          assessmentData={assessmentData}
-          editingOptionIndex={editingOptionIndex}
-          setEditingOptionIndex={setEditingOptionIndex}
-        />
-      </div>
-    </div>
+    </>
   );
 };
 
