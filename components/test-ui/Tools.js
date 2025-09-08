@@ -118,7 +118,7 @@ const QuestionSettings = ({ question, onUpdate }) => {
                 min={
                   typeof question.id === "string" ? 2 : question.answers?.length
                 }
-                max={10}
+                max={100}
                 value={question.answers?.length || 4}
                 onChange={handleOptionCountChange}
               />

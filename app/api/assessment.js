@@ -26,7 +26,7 @@ export const createAssessment = async (values) => {
       answerCategories: values.answerCategories,
       status: 20,
     };
-    const res = await fetch(`${api}assessment`, {
+    const res = await fetch(`${api}assessment/all`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -55,7 +55,7 @@ export const getAssessments = async () => {
   const token = await getAuthToken();
   if (!token) return { token: false };
   try {
-    const res = await fetch(`${api}assessment`, {
+    const res = await fetch(`${api}assessment/all`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

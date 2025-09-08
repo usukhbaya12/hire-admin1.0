@@ -17,6 +17,7 @@ const Menu = () => {
     { name: "Төлбөр", key: "payments", href: "/payments" },
     { name: "Блог", key: "blogs", href: "/blogs" },
     { name: "Холбогдох хүсэлт", key: "contact", href: "/contact" },
+    // { name: "И-мэйл лог", key: "email", href: "/email" },
   ];
 
   return (
