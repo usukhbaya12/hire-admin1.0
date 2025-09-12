@@ -50,6 +50,7 @@ const Blogs = () => {
     current: 1,
     pageSize: 10,
     total: 0,
+    count: 0,
   });
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -134,16 +135,23 @@ const Blogs = () => {
     };
   };
 
-  const fetchBlogs = async (page = 1, type = categoryFilter) => {
+  const fetchBlogs = async (
+    page = 1,
+    type = categoryFilter,
+    pageSize = pagination.pageSize
+  ) => {
     try {
       setLoading(true);
-      const response = await getBlogs(type, pagination.pageSize, page);
+      const response = await getBlogs(pageSize, page, type);
+
       if (response.success) {
-        setBlogs(response.data.data || []);
+        setBlogs(response.data || []);
         setPagination({
           ...pagination,
           current: page,
-          total: response.data.total || 0,
+          pageSize,
+          total: response.total || 0,
+          count: response.count,
         });
       } else {
         messageApi.error(response.message || "Алдаа гарлаа.");
@@ -197,6 +205,8 @@ const Blogs = () => {
       });
   };
 
+  console.log(blogs);
+
   const columns = [
     {
       title: "Зураг",
@@ -225,19 +235,8 @@ const Blogs = () => {
       sorter: (a, b) => a.title.localeCompare(b.title),
       render: (text, record) => (
         <div className="flex items-center gap-2">
-          <div className="text-black font-semibold flex items-center gap-2">
+          <div className="text-main! font-bold hover:text-secondary! transition-colors hover:underline! underline-offset-2">
             {text}
-            {record.pinned && (
-              <Tag
-                color="red"
-                className="rounded-full! font-semibold! px-2.5! shadow ml-2!"
-              >
-                <div className="flex items-center gap-1 text-xs">
-                  <Star1BoldDuotone width={14} className="text-red-500!" />
-                  Онцолсон
-                </div>
-              </Tag>
-            )}
           </div>
         </div>
       ),
@@ -246,25 +245,51 @@ const Blogs = () => {
     {
       title: "Ангилал",
       dataIndex: "category",
-      render: (category) => {
+      render: (category, record) => {
         const categoryObj = BLOG_CATEGORIES.find(
           (cat) => cat.value === category
         );
         return (
-          <Tag
-            color="blue"
-            className="mt-2 rounded-full! font-semibold px-2.5! shadow"
-          >
-            {categoryObj ? categoryObj.label : "Unknown"}
-          </Tag>
+          <div className="items-center">
+            <Tag
+              color="blue"
+              className="rounded-full! font-semibold px-2.5! shadow"
+            >
+              {categoryObj ? categoryObj.label : "Unknown"}
+            </Tag>
+            {record.pinned && (
+              <Tag
+                color="red"
+                className="rounded-full! font-semibold px-2.5! shadow"
+              >
+                Онцолсон
+              </Tag>
+            )}
+          </div>
         );
       },
-      filters: BLOG_CATEGORIES.map((cat) => ({
-        text: cat.label,
-        value: cat.value,
-      })),
-      onFilter: (value, record) => record.category === value,
       align: "center",
+      // remove filters and onFilter
+    },
+    {
+      title: "Зохиогч",
+      dataIndex: ["user", "firstname"],
+      key: "user",
+      // render: (category) => {
+      //   const categoryObj = BLOG_CATEGORIES.find(
+      //     (cat) => cat.value === category
+      //   );
+      //   return (
+      //     <Tag
+      //       color="blue"
+      //       className="mt-2 rounded-full! font-semibold px-2.5! shadow"
+      //     >
+      //       {categoryObj ? categoryObj.label : "Unknown"}
+      //     </Tag>
+      //   );
+      // },
+      align: "center",
+      // remove filters and onFilter
     },
     {
       title: "Унших хугацаа",
@@ -355,16 +380,52 @@ const Blogs = () => {
         </div>
         <div className="pt-4">
           <Table
+            // bordered
             pagination={{
               ...pagination,
               showSizeChanger: true,
-              pageSizeOptions: ["10", "20", "50"],
+              pageSizeOptions: ["10", "20", "50", pagination.count.toString()],
+              size: "small",
+              showTotal: (total, range) => {
+                const start =
+                  (pagination.current - 1) * pagination.pageSize + 1;
+                let end = start + filteredBlogs.length - 1;
+                if (pagination.count < end) end = pagination.count;
+
+                return `${start}-ээс ${end} / Нийт ${pagination.count}`;
+              },
             }}
-            onChange={handleTableChange}
+            onChange={(newPagination, filters, sorter) => {
+              setPagination((prev) => ({
+                ...prev,
+                current: newPagination.current,
+                pageSize: newPagination.pageSize,
+              }));
+
+              if (sorter.order) {
+                const sortedData = [...filteredBlogs].sort((a, b) => {
+                  if (sorter.columnKey === "title") {
+                    return sorter.order === "ascend"
+                      ? a.title.localeCompare(b.title)
+                      : b.title.localeCompare(a.title);
+                  } else if (sorter.columnKey === "minutes") {
+                    return sorter.order === "ascend"
+                      ? a.minutes - b.minutes
+                      : b.minutes - a.minutes;
+                  } else if (sorter.columnKey === "createdAt") {
+                    return sorter.order === "ascend"
+                      ? new Date(a.createdAt) - new Date(b.createdAt)
+                      : new Date(b.createdAt) - new Date(a.createdAt);
+                  }
+                  return 0;
+                });
+                setFilteredBlogs(sortedData);
+              }
+            }}
             columns={columns}
             dataSource={filteredBlogs}
-            locale={customLocale}
             rowKey={(record) => record.id}
+            locale={customLocale}
             onRow={(record) => ({
               onClick: () => router.push(`/blogs/edit/${record.id}`),
             })}

@@ -1,24 +1,82 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MenuIcon } from "./Icons";
+import { DropdownIcon, MenuIcon } from "./Icons";
 import { Divider } from "antd";
+import {
+  FolderFavouriteBookmarkBoldDuotone,
+  HandShakeBoldDuotone,
+  LightbulbBoltBoldDuotone,
+  MoneyBagBoldDuotone,
+  NotesBoldDuotone,
+  PenNewRoundBoldDuotone,
+  PeopleNearbyBoldDuotone,
+} from "solar-icons";
 
 const Menu = () => {
   const pathname = usePathname();
+  const [openMenu, setOpenMenu] = useState(null);
 
   const menuItems = [
-    { name: "Тестийн сан", key: "tests", href: "/" },
-    { name: "Хэрэглэгчид", key: "users", href: "/users" },
-    { name: "Үр дүн", key: "results", href: "/results" },
-    { name: "Санал, хүсэлт", key: "feedbacks", href: "/feedbacks" },
-    { name: "Төлбөр", key: "payments", href: "/payments" },
-    { name: "Блог", key: "blogs", href: "/blogs" },
-    { name: "Холбогдох хүсэлт", key: "contact", href: "/contact" },
-    // { name: "И-мэйл лог", key: "email", href: "/email" },
+    {
+      name: "Тестийн сан",
+      key: "tests",
+      href: "/",
+      icon: <NotesBoldDuotone width={18} />,
+    },
+    {
+      name: "Хэрэглэгчид",
+      key: "users",
+      subMenu: [
+        { name: "Байгууллагууд", href: "/users/organizations" },
+        { name: "Хэрэглэгчид", href: "/users/list" },
+        { name: "Админ эрхтэй", href: "/users/admins" },
+      ],
+      icon: <PeopleNearbyBoldDuotone width={18} />,
+    },
+    {
+      name: "Үр дүн",
+      key: "results",
+      href: "/results",
+      icon: <FolderFavouriteBookmarkBoldDuotone width={18} />,
+    },
+    {
+      name: "Санал, хүсэлт",
+      key: "feedbacks",
+      subMenu: [
+        { name: "Тестийн тухай", href: "/feedbacks/test" },
+        { name: "Тестийн явцад тулгарсан", href: "/feedbacks/process" },
+      ],
+      icon: <LightbulbBoltBoldDuotone width={18} />,
+    },
+    {
+      name: "Төлбөр",
+      key: "payments",
+      href: "/payments",
+      icon: <MoneyBagBoldDuotone width={18} />,
+    },
+    {
+      name: "Блог",
+      key: "blogs",
+      href: "/blogs",
+      icon: <PenNewRoundBoldDuotone width={18} />,
+    },
+    {
+      name: "Холбогдох",
+      key: "contact",
+      subMenu: [
+        { name: "Тест нийлүүлэх", href: "/contact/supply" },
+        { name: "Хамтран ажиллах", href: "/contact/collaborate" },
+        { name: "Тестийн талаарх санал хүсэлт", href: "/contact/feedback" },
+        { name: "Бусад", href: "/contact/others" },
+      ],
+      icon: <HandShakeBoldDuotone width={18} />,
+    },
   ];
+
+  const isActive = (href) => pathname === href;
 
   return (
     <div className="border-r border-neutral py-3 w-[220px] h-screen">
@@ -27,28 +85,75 @@ const Menu = () => {
         Цэс
       </div>
       <Divider />
-      <div className="flex-col flex gap-1 pl-5 pr-12">
+      <div className="flex-col flex gap-1 px-3">
         {menuItems.map((item) => {
-          const isActive = pathname === item.href;
+          const hasSubMenu = item.subMenu && item.subMenu.length > 0;
+          const isOpen = openMenu === item.key;
 
           return (
-            <Link
-              href={item.href}
-              key={item.key}
-              className={`block cursor-pointer rounded-xl hover:bg-bg10 hover:rounded-full hover:text-main hover:font-semibold
-                          ${isActive ? "relative group" : ""}`}
-            >
-              {isActive ? (
-                <>
-                  <div className="absolute -inset-0.5 bg-gradient-to-br from-main/50 to-secondary/50 rounded-full blur opacity-30 group-hover:opacity-40 transition duration-300"></div>
-                  <div className="relative bg-gradient-to-br py-1.5 px-5 from-main/20 to-secondary/20 rounded-full flex items-center border border-main/10">
-                    <div className="font-extrabold text-main">{item.name}</div>
+            <div key={item.key}>
+              {/* Main Menu */}
+              <div
+                onClick={() =>
+                  hasSubMenu ? setOpenMenu(isOpen ? null : item.key) : null
+                }
+                className={`flex justify-between items-center cursor-pointer rounded-3xl px-2
+                  hover:bg-gray-100 transition-colors
+                  ${
+                    !hasSubMenu && isActive(item.href)
+                      ? "bg-main/10 text-main font-semibold"
+                      : ""
+                  }
+                  ${hasSubMenu && isOpen ? "bg-gray-100 font-semibold" : ""}`}
+              >
+                {hasSubMenu ? (
+                  <div className="px-4 py-2 w-full flex items-center gap-2 text-[#444]">
+                    {item.icon}
+                    {item.name}
                   </div>
-                </>
-              ) : (
-                <div className="px-5 py-1.5">{item.name}</div>
+                ) : (
+                  <Link
+                    href={item.href}
+                    className="px-4 py-2 w-full flex items-center gap-2"
+                  >
+                    {item.icon}
+                    {item.name}
+                  </Link>
+                )}
+                {hasSubMenu && (
+                  <span
+                    className={`pr-2 text-sm transition-transform duration-300`}
+                  >
+                    <DropdownIcon
+                      width={12}
+                      height={12}
+                      rotate={isOpen ? 0 : -90}
+                    />
+                  </span>
+                )}
+              </div>
+
+              {/* Submenu */}
+              {hasSubMenu && isOpen && (
+                <div className="flex flex-col gap-1 mt-1 ml-2 border-l border-gray-300 pl-3">
+                  {item.subMenu.map((sub) => (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      className={`px-3 py-1.5 rounded-md transition-colors
+                        hover:bg-gray-100 hover:text-main
+                        ${
+                          isActive(sub.href)
+                            ? "bg-main/10 text-main font-semibold"
+                            : "text-[#555]"
+                        }`}
+                    >
+                      {sub.name}
+                    </Link>
+                  ))}
+                </div>
               )}
-            </Link>
+            </div>
           );
         })}
       </div>

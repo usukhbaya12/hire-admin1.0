@@ -25,7 +25,7 @@ export default async function Home() {
         <div className="fixed">
           <Menu />
         </div>
-        <div className="flex-grow ml-[220px] p-6 pr-11 pl-8">
+        <div className="flex-grow ml-[220px]">
           <Assessments
             initialAssessments={sortedAssessments}
             initialCategories={categories}

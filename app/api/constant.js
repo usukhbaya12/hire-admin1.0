@@ -374,11 +374,19 @@ export const getPaymentHistory = async (
   }
 };
 
-export const getBlogs = async (type = 0, limit = 10, page = 1) => {
+export const getBlogs = async (limit = 10, page = 1, type = 0) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
+
   try {
-    const res = await fetch(`${api}blog/all/${type}/${limit}/${page}`, {
+    const params = new URLSearchParams();
+    params.append("limit", limit);
+    params.append("page", page);
+    if (type && type !== 0) {
+      params.append("type", type);
+    }
+
+    const res = await fetch(`${api}blog/all?${params.toString()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -387,7 +395,9 @@ export const getBlogs = async (type = 0, limit = 10, page = 1) => {
     }).then((d) => d.json());
 
     return {
-      data: res.payload,
+      data: res.payload?.data,
+      count: res.payload?.count,
+      total: res.payload?.total,
       token: true,
       message: res?.message,
       status: res?.status,

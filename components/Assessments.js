@@ -421,10 +421,10 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         title: "Төрөл",
         dataIndex: ["data", "type"],
         key: "type",
-        width: 60,
+        width: "60px",
         align: "center",
         render: (type) => (
-          <span className="text-main">
+          <span className="text-main text-center justify-center flex">
             {type === ASSESSMENT_TYPE.SURVEY ? (
               <ChartSquareLineDuotone width={18} />
             ) : (
@@ -434,6 +434,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         ),
       },
       {
+        width: "300px",
         title: "Тестийн нэр",
         dataIndex: ["data", "name"],
         key: "name",
@@ -451,6 +452,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
       {
         title: "Ангилал",
         dataIndex: "category",
+        width: "100px",
         key: "category",
         render: (_, record) => {
           const categoryName = record.category?.parent
@@ -472,7 +474,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         title: "Төлөв",
         dataIndex: ["data", "status"],
         key: "status",
-        width: 100,
+        width: "70px",
         align: "center",
         render: renderStatus,
         filters: STATUS_OPTIONS,
@@ -482,6 +484,8 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         title: "Үүсгэсэн",
         dataIndex: "user",
         key: "user",
+        width: "100px",
+
         render: formatUserName,
         filters: userFilters,
         onFilter: (value, record) => record.user?.createdUser?.id === value,
@@ -496,7 +500,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
           new Date(b.data.createdAt).getTime(),
         render: (date) =>
           date ? new Date(date).toISOString().split("T")[0] : "-",
-        width: 160,
+        width: "100px",
       },
       {
         title: "Шинэчилсэн огноо",
@@ -507,7 +511,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
           new Date(b.data.updatedAt).getTime(),
         render: (date) =>
           date ? new Date(date).toISOString().split("T")[0] : "-",
-        width: 150,
+        width: "100px",
       },
       {
         title: "",
@@ -535,96 +539,99 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
 
   return (
     <>
-      {contextHolder}
-      <InfoModal
-        open={deleteModal.open}
-        onOk={() => {
-          if (deleteModal.record) handleDelete(deleteModal.record);
-        }}
-        onCancel={closeDeleteModal}
-        text={`${
-          deleteModal.record?.data?.name || "Сонгосон тест"
-        }-ийг устгах гэж байна. Итгэлтэй байна уу? Энэ үйлдлийг сэргээх боломжгүй.`}
-      />
-      <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
-        <div className="flex gap-4 flex-wrap">
-          <Input
-            className="max-w-[220px]"
-            prefix={
-              <MagniferLineDuotone
-                className="text-gray-400 mr-2"
-                width={18}
-                height={18}
-              />
-            }
-            placeholder="Нэрээр хайх"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            allowClear
-          />
-          <Select
-            className="min-w-[224px]"
-            placeholder="Төрлөөр хайх"
-            suffixIcon={<DropdownIcon width={15} height={15} />}
-            options={TYPE_OPTIONS}
-            value={typeFilter}
-            onChange={(value) => {
-              setTypeFilter(value === undefined ? null : value);
+      <div className="px-5 py-6">
+        {contextHolder}
+        <InfoModal
+          open={deleteModal.open}
+          onOk={() => {
+            if (deleteModal.record) handleDelete(deleteModal.record);
+          }}
+          onCancel={closeDeleteModal}
+          text={`${
+            deleteModal.record?.data?.name || "Сонгосон тест"
+          }-ийг устгах гэж байна. Итгэлтэй байна уу? Энэ үйлдлийг сэргээх боломжгүй.`}
+        />
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-2 flex-row">
+            <Input
+              className="max-w-[220px]"
+              prefix={
+                <MagniferLineDuotone
+                  className="text-gray-400 mr-2"
+                  width={18}
+                  height={18}
+                />
+              }
+              placeholder="Нэрээр хайх"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              allowClear
+            />
+            <Select
+              className="min-w-[224px]"
+              placeholder="Төрлөөр хайх"
+              suffixIcon={<DropdownIcon width={15} height={15} />}
+              options={TYPE_OPTIONS}
+              value={typeFilter}
+              onChange={(value) => {
+                setTypeFilter(value === undefined ? null : value);
+              }}
+              allowClear
+              onClear={() => setTypeFilter(null)}
+            />
+          </div>
+          <Button
+            onClick={showModal}
+            className="the-btn"
+            icon={<PlusIcon width={18} height={18} color={"#f36421"} />}
+          >
+            Тест үүсгэх
+          </Button>
+        </div>
+        <div className="pt-2">
+          <Table
+            columns={columns}
+            dataSource={filteredAssessments}
+            locale={customLocale}
+            rowKey={(record) => record.data.id}
+            loading={{
+              spinning: isActionLoading,
+              indicator: (
+                <Spin
+                  size="default"
+                  indicator={
+                    <LoadingOutlined
+                      style={{ color: "#f26522", fontSize: 24 }}
+                      spin
+                    />
+                  }
+                />
+              ),
             }}
-            allowClear
-            onClear={() => setTypeFilter(null)}
+            pagination={{
+              pageSize: 10,
+              size: "small",
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} / ${total} тестүүд`,
+            }}
+            scroll={{ x: "max-content" }}
           />
         </div>
-        <Button
-          onClick={showModal}
-          className="the-btn"
-          icon={<PlusIcon width={18} height={18} color={"#f36421"} />}
-        >
-          Тест үүсгэх
-        </Button>
-      </div>
-      <div className="pt-2">
-        <Table
-          columns={columns}
-          dataSource={filteredAssessments}
-          locale={customLocale}
-          rowKey={(record) => record.data.id}
-          loading={{
-            spinning: isActionLoading,
-            indicator: (
-              <Spin
-                size="default"
-                indicator={
-                  <LoadingOutlined
-                    style={{ color: "#f26522", fontSize: 24 }}
-                    spin
-                  />
-                }
-              />
-            ),
-          }}
-          pagination={{
-            pageSize: 10,
-            size: "small",
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} / ${total} тестүүд`,
-          }}
-          scroll={{ x: "max-content" }}
+
+        <NewAssessment
+          assessmentCategories={categories}
+          isModalOpen={isModalOpen}
+          handleOk={handleOk}
+          handleCancel={handleCancel}
+          onCategoryCreate={refreshCategories}
+        />
+        <OkModal
+          open={featuredLimitModal.open}
+          onOk={() => setFeaturedLimitModal({ open: false })}
+          onCancel={() => setFeaturedLimitModal({ open: false })}
+          text="Аль хэдийн 3 тест онцолсон байна. Нэмж тест онцлох боломжгүй."
         />
       </div>
-      <NewAssessment
-        assessmentCategories={categories}
-        isModalOpen={isModalOpen}
-        handleOk={handleOk}
-        handleCancel={handleCancel}
-        onCategoryCreate={refreshCategories}
-      />
-      <OkModal
-        open={featuredLimitModal.open}
-        onOk={() => setFeaturedLimitModal({ open: false })}
-        onCancel={() => setFeaturedLimitModal({ open: false })}
-        text="Аль хэдийн 3 тест онцолсон байна. Нэмж тест онцлох боломжгүй."
-      />
     </>
   );
 };
