@@ -30,9 +30,9 @@ const Menu = () => {
       name: "Хэрэглэгчид",
       key: "users",
       subMenu: [
-        { name: "Байгууллагууд", href: "/users/organizations" },
-        { name: "Хэрэглэгчид", href: "/users/list" },
-        { name: "Админ эрхтэй", href: "/users/admins" },
+        { name: "Байгууллагууд", href: "/orgs" },
+        { name: "Хэрэглэгчид", href: "/users" },
+        { name: "Админ эрхтэй", href: "/admins" },
       ],
       icon: <PeopleNearbyBoldDuotone width={18} />,
     },
@@ -135,12 +135,12 @@ const Menu = () => {
 
               {/* Submenu */}
               {hasSubMenu && isOpen && (
-                <div className="flex flex-col gap-1 mt-1 ml-2 border-l border-gray-300 pl-3">
+                <div className="flex flex-col gap-1 mt-1 ml-8 border-l-2 border-gray-300 pl-1.5">
                   {item.subMenu.map((sub) => (
                     <Link
                       key={sub.href}
                       href={sub.href}
-                      className={`px-3 py-1.5 rounded-md transition-colors
+                      className={`px-3 py-1.5 rounded-3xl mr-0.75 transition-colors
                         hover:bg-gray-100 hover:text-main
                         ${
                           isActive(sub.href)

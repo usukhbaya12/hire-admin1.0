@@ -2,7 +2,16 @@
 
 import React, { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { Input, Button, Table, Dropdown, message, Select, Spin } from "antd";
+import {
+  Input,
+  Button,
+  Table,
+  Dropdown,
+  message,
+  Select,
+  Spin,
+  ConfigProvider,
+} from "antd";
 import { PlusIcon, MoreIcon, DropdownIcon } from "./Icons";
 import { useRouter } from "next/navigation";
 import NewAssessment from "./modals/New";
@@ -14,6 +23,7 @@ import {
   deleteAssessmentById,
   updateAssessmentById,
 } from "@/app/api/assessment";
+import mnMN from "antd/lib/locale/mn_MN";
 import { customLocale } from "@/utils/values";
 import {
   ChartSquareLineDuotone,
@@ -106,24 +116,44 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categories, setCategories] = useState(initialCategories);
   const [assessments, setAssessments] = useState(initialAssessments);
-  const [searchText, setSearchText] = useState("");
-  const [typeFilter, setTypeFilter] = useState(null);
   const [deleteModal, setDeleteModal] = useState({ open: false, record: null });
   const [messageApi, contextHolder] = message.useMessage();
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [featuredLimitModal, setFeaturedLimitModal] = useState({ open: false });
 
+  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
+  const [filters, setFilters] = useState({});
+  const [searchText, setSearchText] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState(null);
+
+  // 🔹 Debounce search text
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500); // 500ms debounce
+    return () => clearTimeout(handler);
+  }, [searchText]);
+
   const refreshData = useCallback(async () => {
     setIsActionLoading(true);
     try {
-      const assessmentsRes = await getAssessments();
+      const assessmentsRes = await getAssessments({
+        limit: pagination.pageSize,
+        page: pagination.current,
+        name: debouncedSearch || undefined,
+        type: typeFilter || undefined,
+        status: filters.status || undefined,
+        category: filters.category || undefined,
+        createdUser: filters.user || undefined,
+      });
+
       if (assessmentsRes.success) {
-        const sortedAssessments = (assessmentsRes.data?.res || []).sort(
-          (a, b) =>
-            new Date(b.data.createdAt).getTime() -
-            new Date(a.data.createdAt).getTime()
-        );
-        setAssessments(sortedAssessments);
+        setAssessments(assessmentsRes.data?.res || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: assessmentsRes.data?.count || 0,
+        }));
       } else {
         messageApi.error(assessmentsRes.message || "Алдаа гарлаа.");
       }
@@ -132,13 +162,24 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
     } finally {
       setIsActionLoading(false);
     }
-  }, [messageApi]);
+  }, [
+    pagination.current,
+    pagination.pageSize,
+    debouncedSearch,
+    typeFilter,
+    filters,
+    messageApi,
+  ]);
+
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   const refreshCategories = useCallback(async () => {
     try {
       const categoriesRes = await getAssessmentCategory();
       if (categoriesRes.success) {
-        setCategories(categoriesRes.data || []); // Update the state
+        setCategories(categoriesRes.data || []);
       } else {
         messageApi.error(
           categoriesRes.message || "Ангилал дахин татахад алдаа гарлаа."
@@ -149,17 +190,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
       messageApi.error("Сервертэй холбогдоход алдаа гарлаа.");
     }
   }, [messageApi]);
-
-  const filteredAssessments = useMemo(() => {
-    return assessments.filter((item) => {
-      const matchesSearch = searchText
-        ? item.data.name.toLowerCase().includes(searchText.toLowerCase())
-        : true;
-      const matchesType =
-        typeFilter !== null ? item.data.type === typeFilter : true;
-      return matchesSearch && matchesType;
-    });
-  }, [assessments, searchText, typeFilter]);
 
   const showModal = useCallback(() => setIsModalOpen(true), []);
   const handleCancel = useCallback(() => {
@@ -193,7 +223,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         if (response.success && response.data?.id) {
           messageApi.success("Тест амжилттай үүссэн.");
           setIsModalOpen(false);
-
           router.push(`/test/${response.data.id}`);
         } else {
           messageApi.error(response.message || "Тест үүсгэхэд алдаа гарлаа.");
@@ -212,9 +241,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
     async (record, newStatus) => {
       if (!record?.data?.id) return;
 
-      // Check if trying to set as Featured
       if (newStatus === STATUS.FEATURED) {
-        // Count current featured assessments
         const featuredCount = assessments.filter(
           (assessment) => assessment.data.status === STATUS.FEATURED
         ).length;
@@ -233,7 +260,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         });
         if (response.success) {
           messageApi.success("Төлөв амжилттай өөрчлөгдлөө.");
-          await refreshData(); // Use await to ensure data is refreshed before continuing
+          await refreshData();
         } else {
           messageApi.error(response.message || "Төлөв өөрчлөхөд алдаа гарлаа.");
         }
@@ -366,7 +393,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
             e.domEvent.stopPropagation();
             handleCopyClick(record);
           },
-          // disabled: true,
         },
         {
           key: "delete",
@@ -462,7 +488,6 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         },
         filters: categoryFilters,
         filterMode: "tree",
-        // filterSearch: true,
         onFilter: (value, record) => {
           return (
             record.category?.id === value ||
@@ -474,7 +499,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         title: "Төлөв",
         dataIndex: ["data", "status"],
         key: "status",
-        width: "70px",
+        width: "60px",
         align: "center",
         render: renderStatus,
         filters: STATUS_OPTIONS,
@@ -484,8 +509,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
         title: "Үүсгэсэн",
         dataIndex: "user",
         key: "user",
-        width: "100px",
-
+        width: "120px",
         render: formatUserName,
         filters: userFilters,
         onFilter: (value, record) => record.user?.createdUser?.id === value,
@@ -539,99 +563,110 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
 
   return (
     <>
-      <div className="px-5 py-6">
-        {contextHolder}
-        <InfoModal
-          open={deleteModal.open}
-          onOk={() => {
-            if (deleteModal.record) handleDelete(deleteModal.record);
-          }}
-          onCancel={closeDeleteModal}
-          text={`${
-            deleteModal.record?.data?.name || "Сонгосон тест"
-          }-ийг устгах гэж байна. Итгэлтэй байна уу? Энэ үйлдлийг сэргээх боломжгүй.`}
-        />
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex gap-2 flex-row">
-            <Input
-              className="max-w-[220px]"
-              prefix={
-                <MagniferLineDuotone
-                  className="text-gray-400 mr-2"
-                  width={18}
-                  height={18}
-                />
-              }
-              placeholder="Нэрээр хайх"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              allowClear
-            />
-            <Select
-              className="min-w-[224px]"
-              placeholder="Төрлөөр хайх"
-              suffixIcon={<DropdownIcon width={15} height={15} />}
-              options={TYPE_OPTIONS}
-              value={typeFilter}
-              onChange={(value) => {
-                setTypeFilter(value === undefined ? null : value);
+      <ConfigProvider locale={mnMN}>
+        <div className="px-5 py-6">
+          {contextHolder}
+          <InfoModal
+            open={deleteModal.open}
+            onOk={() => {
+              if (deleteModal.record) handleDelete(deleteModal.record);
+            }}
+            onCancel={closeDeleteModal}
+            text={`${
+              deleteModal.record?.data?.name || "Сонгосон тест"
+            }-ийг устгах гэж байна. Итгэлтэй байна уу? Энэ үйлдлийг сэргээх боломжгүй.`}
+          />
+          <div className="flex justify-between items-center mb-4">
+            <div className="flex gap-2 flex-row">
+              <Input
+                className="max-w-[220px]"
+                prefix={
+                  <MagniferLineDuotone
+                    className="text-gray-400 mr-2"
+                    width={18}
+                    height={18}
+                  />
+                }
+                placeholder="Нэрээр хайх"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+              />
+              <Select
+                className="min-w-[224px]"
+                placeholder="Төрлөөр хайх"
+                suffixIcon={<DropdownIcon width={15} height={15} />}
+                options={TYPE_OPTIONS}
+                value={typeFilter}
+                onChange={(value) => {
+                  setTypeFilter(value === undefined ? null : value);
+                }}
+                allowClear
+                onClear={() => setTypeFilter(null)}
+              />
+            </div>
+            <Button
+              onClick={showModal}
+              className="the-btn"
+              icon={<PlusIcon width={18} height={18} color={"#f36421"} />}
+            >
+              Тест үүсгэх
+            </Button>
+          </div>
+          <div className="pt-2">
+            <Table
+              columns={columns}
+              dataSource={assessments}
+              locale={customLocale}
+              rowKey={(record) => record.data.id}
+              loading={{
+                spinning: isActionLoading,
+                indicator: (
+                  <Spin
+                    size="default"
+                    indicator={
+                      <LoadingOutlined
+                        style={{ color: "#f26522", fontSize: 24 }}
+                        spin
+                      />
+                    }
+                  />
+                ),
               }}
-              allowClear
-              onClear={() => setTypeFilter(null)}
+              pagination={{
+                ...pagination,
+                showSizeChanger: true,
+                pageSizeOptions: ["10", "20", "50", pagination.total],
+                size: "small",
+                showTotal: (total, range) =>
+                  `${range[0]}-ээс ${range[1]} / Нийт ${total} тестүүд`,
+              }}
+              onChange={(pag, tableFilters) => {
+                setPagination({ current: pag.current, pageSize: pag.pageSize });
+                setFilters({
+                  status: tableFilters.status?.[0],
+                  category: tableFilters.category?.[0],
+                  user: tableFilters.user?.[0],
+                });
+              }}
             />
           </div>
-          <Button
-            onClick={showModal}
-            className="the-btn"
-            icon={<PlusIcon width={18} height={18} color={"#f36421"} />}
-          >
-            Тест үүсгэх
-          </Button>
-        </div>
-        <div className="pt-2">
-          <Table
-            columns={columns}
-            dataSource={filteredAssessments}
-            locale={customLocale}
-            rowKey={(record) => record.data.id}
-            loading={{
-              spinning: isActionLoading,
-              indicator: (
-                <Spin
-                  size="default"
-                  indicator={
-                    <LoadingOutlined
-                      style={{ color: "#f26522", fontSize: 24 }}
-                      spin
-                    />
-                  }
-                />
-              ),
-            }}
-            pagination={{
-              pageSize: 10,
-              size: "small",
-              showTotal: (total, range) =>
-                `${range[0]}-${range[1]} / ${total} тестүүд`,
-            }}
-            scroll={{ x: "max-content" }}
+
+          <NewAssessment
+            assessmentCategories={categories}
+            isModalOpen={isModalOpen}
+            handleOk={handleOk}
+            handleCancel={handleCancel}
+            onCategoryCreate={refreshCategories}
+          />
+          <OkModal
+            open={featuredLimitModal.open}
+            onOk={() => setFeaturedLimitModal({ open: false })}
+            onCancel={() => setFeaturedLimitModal({ open: false })}
+            text="Аль хэдийн 3 тест онцолсон байна. Нэмж тест онцлох боломжгүй."
           />
         </div>
-
-        <NewAssessment
-          assessmentCategories={categories}
-          isModalOpen={isModalOpen}
-          handleOk={handleOk}
-          handleCancel={handleCancel}
-          onCategoryCreate={refreshCategories}
-        />
-        <OkModal
-          open={featuredLimitModal.open}
-          onOk={() => setFeaturedLimitModal({ open: false })}
-          onCancel={() => setFeaturedLimitModal({ open: false })}
-          text="Аль хэдийн 3 тест онцолсон байна. Нэмж тест онцлох боломжгүй."
-        />
-      </div>
+      </ConfigProvider>
     </>
   );
 };

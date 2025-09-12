@@ -26,7 +26,7 @@ export const createAssessment = async (values) => {
       answerCategories: values.answerCategories,
       status: 20,
     };
-    const res = await fetch(`${api}assessment/all?limit=200&page=0`, {
+    const res = await fetch(`${api}assessment`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -51,17 +51,36 @@ export const createAssessment = async (values) => {
   }
 };
 
-export const getAssessments = async () => {
+export const getAssessments = async ({
+  limit = 10,
+  page = 1,
+  type,
+  status,
+  name,
+  category,
+  createdUser,
+} = {}) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
+
   try {
-    const res = await fetch(`${api}assessment/all?limit=200&page=0`, {
+    const params = new URLSearchParams();
+    params.append("limit", limit);
+    params.append("page", page);
+    if (type) params.append("type", type);
+    if (status) params.append("status", status);
+    if (name) params.append("name", name);
+    if (category) params.append("category", category);
+    if (createdUser) params.append("createdUser", createdUser);
+
+    const res = await fetch(`${api}assessment/all?${params.toString()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     }).then((d) => d.json());
+
     return {
       data: res.payload,
       token: true,

@@ -6,11 +6,11 @@ import { getUsers } from "@/app/api/constant";
 import { LoadingOutlined } from "@ant-design/icons";
 import UserDetailModal from "./modals/User";
 import mnMN from "antd/lib/locale/mn_MN";
-import { PeopleNearbyBoldDuotone } from "solar-icons";
+import { Buildings2BoldDuotone } from "solar-icons";
 
-const Users = () => {
+const Organizations = () => {
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
   const [messageApi, contextHolder] = message.useMessage();
   const [selectedUser, setSelectedUser] = useState(null);
   const [userModalVisible, setUserModalVisible] = useState(false);
@@ -33,40 +33,67 @@ const Users = () => {
     ],
   });
 
-  const userColumns = [
+  const organizationColumns = [
     {
-      title: "Хэрэглэгч",
-      key: "user",
-      render: (_, record) => (
+      title: "Байгууллагын нэр",
+      dataIndex: "organizationName",
+      sorter: true,
+      render: (text, record) => (
         <div className="flex items-center gap-3">
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-br from-main/50 to-secondary/50 rounded-full blur opacity-30 group-hover:opacity-40 transition duration-300"></div>
-            <div className="relative min-w-12 min-h-12 bg-gradient-to-br from-main/10 to-secondary/10 rounded-full flex items-center justify-center border border-main/10">
-              <div className="text-base font-bold uppercase bg-gradient-to-br from-main to-secondary bg-clip-text text-transparent">
-                {record?.firstname?.[0]}
+            <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500/50 to-blue-600/50 rounded-full blur opacity-30 group-hover:opacity-40 transition duration-300"></div>
+            <div className="relative min-w-12 min-h-12 bg-gradient-to-br from-blue-600/10 to-blue-500/10 rounded-full flex items-center justify-center border border-blue-500/10">
+              <div className="text-base font-bold uppercase bg-gradient-to-br from-blue-500 to-blue-600 bg-clip-text text-transparent">
+                {text?.[0]}
               </div>
             </div>
           </div>
           <div className="leading-4">
-            <div className="font-semibold">
-              {record.lastname} {record.firstname}
-            </div>
-            <div className="text-gray-700 text-sm">{record.email}</div>
+            <div className="font-bold text-blue-600">{text}</div>
           </div>
         </div>
       ),
     },
     {
+      title: "Регистрийн дугаар",
+      dataIndex: "organizationRegisterNumber",
+      align: "center",
+    },
+    {
+      title: "Холбогдох ажилтан",
+      dataIndex: "firstname",
+      sorter: true,
+      render: (text, record) => (
+        <div className="leading-4">
+          <div className="font-semibold">
+            {record.lastname[0]}.{text}
+          </div>
+          <div className="text-gray-700 text-sm">{record.email}</div>
+        </div>
+      ),
+    },
+    {
       title: "Утасны дугаар",
-      dataIndex: "phone",
+      dataIndex: "organizationPhone",
+      align: "center",
     },
     {
       title: "Бүртгүүлсэн огноо",
       dataIndex: "createdAt",
-      sorter: (a, b) =>
-        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
-      render: (date) =>
-        date ? new Date(date).toISOString().split("T")[0] : "-",
+      render: (date) => new Date(date).toLocaleDateString(),
+      sorter: true,
+      align: "center",
+    },
+    {
+      title: "Дансны үлдэгдэл",
+      dataIndex: "wallet",
+      render: (wallet) => (
+        <div className="font-medium text-center">
+          {wallet?.toLocaleString()}₮
+        </div>
+      ),
+      sorter: true,
+      align: "center",
     },
     {
       title: "",
@@ -80,7 +107,7 @@ const Users = () => {
         >
           <Button
             type="text"
-            className="hover:opacity-100 rounded-full!"
+            className="hover:opacity-100"
             icon={<MoreIcon width={16} />}
             onClick={(e) => e.stopPropagation()}
           />
@@ -89,35 +116,31 @@ const Users = () => {
     },
   ];
 
-  const fetchUsers = async (page = 1, pageSize = 10) => {
+  const fetchOrganizations = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true);
       const response = await getUsers({
         limit: pageSize,
         page: page,
-        role: 20, // Regular users role
+        role: 30,
       });
 
       if (response.success && response.data) {
-        // Handle different possible response structures
-        let usersData = [];
+        let organizationsData = [];
         let totalCount = 0;
 
         if (Array.isArray(response.data)) {
-          // If response.data is directly an array
-          usersData = response.data;
+          organizationsData = response.data;
           totalCount = response.data.length;
         } else if (response.data.users && Array.isArray(response.data.users)) {
-          // If response.data has a users property
-          usersData = response.data.users;
+          organizationsData = response.data.users;
           totalCount = response.data.total || response.data.users.length;
         } else if (response.data.data && Array.isArray(response.data.data)) {
-          // If response.data has a data property
-          usersData = response.data.data;
+          organizationsData = response.data.data;
           totalCount = response.data.total || response.data.data.length;
         }
 
-        setUsers(usersData);
+        setOrganizations(organizationsData);
         setPagination((prev) => ({
           ...prev,
           current: page,
@@ -125,12 +148,12 @@ const Users = () => {
           total: totalCount,
         }));
       } else {
-        setUsers([]); // Ensure it's always an array
+        setOrganizations([]);
         messageApi.error(response.message || "Өгөгдөл татахад алдаа гарлаа.");
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
-      setUsers([]); // Ensure it's always an array
+      console.error("Error fetching organizations:", error);
+      setOrganizations([]);
       messageApi.error("Сервертэй холбогдоход алдаа гарлаа.");
     } finally {
       setLoading(false);
@@ -138,11 +161,11 @@ const Users = () => {
   };
 
   useEffect(() => {
-    fetchUsers();
+    fetchOrganizations();
   }, []);
 
   const handleTableChange = (paginationParams, filters, sorter) => {
-    fetchUsers(paginationParams.current, paginationParams.pageSize);
+    fetchOrganizations(paginationParams.current, paginationParams.pageSize);
   };
 
   const handleRowClick = (record) => {
@@ -151,7 +174,7 @@ const Users = () => {
   };
 
   const handleModalSuccess = () => {
-    fetchUsers(pagination.current, pagination.pageSize);
+    fetchOrganizations(pagination.current, pagination.pageSize);
   };
 
   return (
@@ -161,22 +184,22 @@ const Users = () => {
         <div className="p-6">
           <div className="mb-4">
             <div className="text-base font-bold flex items-center gap-2">
-              <PeopleNearbyBoldDuotone className="text-main" />
-              Бүртгэлтэй хэрэглэгчид
+              <Buildings2BoldDuotone className="text-main" />
+              Бүртгэлтэй байгууллагууд
             </div>
           </div>
 
           <Table
             pagination={{
               ...pagination,
+              showSizeChanger: true,
               size: "small",
               pageSizeOptions: ["10", "20", "50", pagination.total],
-              showSizeChanger: true,
               showTotal: (total, range) =>
                 `${range[0]}-ээс ${range[1]} / Нийт ${total}`,
             }}
-            columns={userColumns}
-            dataSource={users}
+            columns={organizationColumns}
+            dataSource={organizations}
             locale={customLocale}
             rowKey="id"
             onRow={(record) => ({
@@ -216,4 +239,4 @@ const Users = () => {
   );
 };
 
-export default Users;
+export default Organizations;

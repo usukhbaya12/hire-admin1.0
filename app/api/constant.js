@@ -166,17 +166,24 @@ export const createUser = async (userData) => {
   }
 };
 
-export const getUsers = async () => {
+export const getUsers = async ({ limit = 10, page = 1, role } = {}) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
+
   try {
-    const res = await fetch(`${api}user`, {
+    const params = new URLSearchParams();
+    params.append("limit", limit);
+    params.append("page", page);
+    if (role) params.append("role", role);
+
+    const res = await fetch(`${api}user?${params.toString()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
     }).then((d) => d.json());
+
     return {
       data: res.payload,
       token: true,
@@ -188,7 +195,7 @@ export const getUsers = async () => {
     console.error(error);
     return {
       success: false,
-      message: "Сервертэй холбогдоход алдаа гарлаа",
+      message: "Сервертэй холбогдоход алдаа гарлаа.",
     };
   }
 };
@@ -349,8 +356,8 @@ export const getPaymentHistory = async (
       paymentMethod: paymentMethod || null,
     };
 
-    const res = await fetch(`${api}payment/admin/${page}/${limit}`, {
-      method: "POST",
+    const res = await fetch(`${api}payment/all?limit=${limit}&page=${page}`, {
+      method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
