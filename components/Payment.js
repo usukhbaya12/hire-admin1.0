@@ -10,6 +10,7 @@ import {
   Tag,
   ConfigProvider,
   Divider,
+  Select,
 } from "antd";
 import { ebarimt, getPaymentHistory, sendEbarimt } from "@/app/api/constant";
 import dayjs from "dayjs";
@@ -24,10 +25,13 @@ import {
   HandMoneyBoldDuotone,
   QrCodeBoldDuotone,
   DatabaseBoldDuotone,
+  MagniferBoldDuotone,
 } from "solar-icons";
 import { customLocale } from "@/utils/values";
 import { LoadingOutlined } from "@ant-design/icons";
 import EBarimtModal from "./modals/EBarimt";
+import { DropdownIcon } from "./Icons";
+import { getAssessments } from "@/app/api/assessment";
 
 const METHODS = {
   BONUS: 1,
@@ -63,7 +67,6 @@ const Payment = () => {
   const [filteredInfo, setFilteredInfo] = useState({});
   const [activeFilters, setActiveFilters] = useState({
     role: 0,
-    assessmentId: 0,
     payment: 0,
   });
   const [messageApi, contextHolder] = message.useMessage();
@@ -74,6 +77,27 @@ const Payment = () => {
   const [selectedAssessmentName, setSelectedAssessmentName] = useState("");
   const [selectedBarimtId, setSelectedBarimtId] = useState(null);
   const [sendEbarimtLoading, setSendEbarimtLoading] = useState(false);
+
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [assessmentOptions, setAssessmentOptions] = useState([]);
+
+  const fetchAssessments = async () => {
+    try {
+      const response = await getAssessments({
+        limit: 300,
+        page: 1,
+      });
+      if (response.success) {
+        const options = response.data.data.map((assessment) => ({
+          label: assessment.data.name,
+          value: assessment.data.id,
+        }));
+        setAssessmentOptions(options);
+      }
+    } catch (error) {
+      console.error("Error fetching assessments:", error);
+    }
+  };
 
   const totals = useMemo(() => {
     if (!data || !data.totalPrice)
@@ -130,7 +154,7 @@ const Payment = () => {
         startDateStr,
         endDateStr,
         filters.role,
-        filters.assessmentId,
+        selectedAssessment,
         filters.payment
       );
 
@@ -144,7 +168,7 @@ const Payment = () => {
 
         setData(response.data);
         setPayments(response.data.data || []);
-        setTotalCount(response.data.total || 0);
+        setTotalCount(response.data.count || 0);
         setCurrentPage(page);
       } else {
         messageApi.error(
@@ -160,9 +184,17 @@ const Payment = () => {
 
   useEffect(() => {
     fetchPaymentData(1, pageSize);
+    fetchAssessments();
   }, []);
 
-  const handleRowClick = async (record) => {
+  // Auto-fetch when dates or assessment changes
+  useEffect(() => {
+    if (startDate || endDate || selectedAssessment !== null) {
+      fetchPaymentData(1, pageSize, activeFilters);
+    }
+  }, [startDate, endDate, selectedAssessment]);
+
+  const handleQPayClick = async (record) => {
     if (!record.message) return;
     const match = record.message.match(/\d+/);
     const id = match ? parseInt(match[0], 10) : null;
@@ -171,7 +203,7 @@ const Payment = () => {
       return;
     }
     setSelectedAssessmentName(record.assessment?.name || "");
-    setSelectedBarimtId(id); // <-- set the extracted id
+    setSelectedBarimtId(id);
     setBarimtVisible(true);
     setBarimtLoading(true);
     setBarimtData(null);
@@ -194,49 +226,29 @@ const Payment = () => {
     setEndDate(date);
   };
 
-  const applyDateFilters = () => {
-    fetchPaymentData(1, pageSize, activeFilters);
-  };
-
   const handleTableChange = (pagination, filters, sorter) => {
     setFilteredInfo(filters);
     setSortedInfo(sorter);
 
-    // Convert antd filter values to API filter parameters
     const newFilters = {
       role: 0,
-      assessmentId: 0,
       payment: 0,
     };
 
-    // Extract role filter
     if (filters.type && filters.type.length) {
-      newFilters.role = filters.type[0]; // Use the first selected role
+      newFilters.role = filters.type[0];
     }
 
-    // Extract assessment filter
-    if (filters.assessment && filters.assessment.length) {
-      newFilters.assessmentId = filters.assessment[0]; // Use the first selected assessment
-    }
-
-    // Extract payment method filter
     if (filters.method && filters.method.length) {
-      newFilters.payment = filters.method[0]; // Use the first selected payment method
+      newFilters.payment = filters.method[0];
     }
 
-    // Update active filters
     setActiveFilters(newFilters);
 
-    // Check if pagination has changed
-    const paginationChanged =
-      pagination.current !== currentPage || pagination.pageSize !== pageSize;
-
-    // Fetch new data with filters and pagination
     if (pagination.pageSize !== pageSize) {
       setPageSize(pagination.pageSize);
     }
 
-    // Always fetch when filters change or pagination changes
     fetchPaymentData(pagination.current, pagination.pageSize, newFilters);
   };
 
@@ -256,25 +268,18 @@ const Payment = () => {
     }
   };
 
-  const assessmentOptions = useMemo(() => {
-    const uniqueAssessments = new Map();
-
-    payments.forEach((payment) => {
-      if (payment.assessment?.name) {
-        const key = payment.assessment.id;
-        if (!uniqueAssessments.has(key)) {
-          uniqueAssessments.set(key, {
-            text: payment.assessment.name,
-            value: payment.assessment.id,
-          });
-        }
-      }
-    });
-
-    return Array.from(uniqueAssessments.values());
-  }, [payments]);
+  const handleAssessmentChange = (value) => {
+    setSelectedAssessment(value);
+  };
 
   const columns = [
+    {
+      title: "Огноо",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (date) => (date ? dayjs(date).format("YYYY-MM-DD HH:mm") : "-"),
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+    },
     {
       title: "Худалдан авагч",
       dataIndex: ["user", "firstname"],
@@ -345,8 +350,6 @@ const Payment = () => {
         { text: "Хэрэглэгч", value: ROLES.USER },
       ],
       filteredValue: filteredInfo.type || null,
-      // Client-side filtering disabled as we're using server-side filtering
-      // onFilter: (value, record) => record.user.role === value,
     },
     {
       title: "Админ",
@@ -374,17 +377,9 @@ const Payment = () => {
       title: "Тестийн нэр",
       dataIndex: ["assessment", "name"],
       key: "assessment",
-      filters: assessmentOptions,
-      filteredValue: filteredInfo.assessment || null,
-      // Client-side filtering disabled as we're using server-side filtering
-      // onFilter: (value, record) => record.assessment?.id === value,
       render: (text) => (
         <span className="font-bold text-main">{text || "-"}</span>
       ),
-      sorter: (a, b) =>
-        (a.assessment?.name || "").localeCompare(b.assessment?.name || ""),
-      sortOrder:
-        sortedInfo.columnKey === "assessment" ? sortedInfo.order : null,
     },
     {
       title: "Үнийн дүн",
@@ -408,31 +403,37 @@ const Payment = () => {
       title: "Төлбөрийн хэлбэр",
       dataIndex: "method",
       key: "method",
-      render: (method) => {
+      render: (method, record) => {
         const displayMethod = method || METHODS.QPAY;
+
+        if (displayMethod === METHODS.QPAY) {
+          return (
+            <div
+              className="flex items-center font-bold text-secondary gap-2 cursor-pointer hover:underline"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleQPayClick(record);
+              }}
+            >
+              <img src="ebarimt.png" width={16} />
+              QPay
+            </div>
+          );
+        }
+
         return (
           <div className="flex items-center gap-2">
             {displayMethod === METHODS.BONUS && (
-              <div className="flex items-center gap-2">
+              <>
                 <GiftLineDuotone width={16} className="text-green-500" />
                 {methodLabels[METHODS.BONUS]}
-              </div>
-            )}
-            {displayMethod === METHODS.QPAY && (
-              <div className="flex items-center gap-4">
-                <img src="/qpay.png" alt="qpay" width="40px"></img>
-                <span>•</span>
-                <button className="cursor-pointer mx-auto text-red-500 hover:text-secondary flex items-center gap-2 font-semibold">
-                  <img src="/ebarimt.png" alt="ebarimt" width="20px"></img>
-                  Устгах
-                </button>
-              </div>
+              </>
             )}
             {displayMethod === METHODS.BANK && (
-              <div className="flex items-center gap-2">
+              <>
                 <Buildings2BoldDuotone width={16} className="text-blue-500" />
                 {methodLabels[METHODS.BANK]}
-              </div>
+              </>
             )}
           </div>
         );
@@ -443,21 +444,6 @@ const Payment = () => {
         { text: methodLabels[METHODS.BANK], value: METHODS.BANK },
       ],
       filteredValue: filteredInfo.method || null,
-      // Client-side filtering disabled as we're using server-side filtering
-      // onFilter: (value, record) => {
-      //   const recordMethod = record.method || METHODS.QPAY;
-      //   return recordMethod === value;
-      // },
-    },
-    {
-      title: "Огноо",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (date) => (date ? dayjs(date).format("YYYY-MM-DD HH:mm") : "-"),
-      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
-      sortOrder:
-        sortedInfo.columnKey === "createdAt" ? sortedInfo.order : "descend",
-      defaultSortOrder: "descend",
     },
   ];
 
@@ -499,8 +485,29 @@ const Payment = () => {
                   }
                 />
               </div>
-              <Button onClick={applyDateFilters} className="back-btn">
-                <CalendarBoldDuotone width={16} />
+              <Select
+                showSearch
+                suffixIcon={
+                  <DropdownIcon width={15} height={15} color={"#f36421"} />
+                }
+                placeholder="Тест сонгох"
+                style={{ width: 200 }}
+                allowClear
+                value={selectedAssessment}
+                onChange={handleAssessmentChange}
+                options={assessmentOptions}
+                optionFilterProp="label"
+                filterOption={(input, option) =>
+                  (option?.label ?? "")
+                    .toLowerCase()
+                    .includes(input.toLowerCase())
+                }
+              />
+              <Button
+                onClick={() => fetchPaymentData(1, pageSize, activeFilters)}
+                className="the-btn"
+              >
+                <MagniferBoldDuotone width={16} />
                 Хайх
               </Button>
             </div>
@@ -605,10 +612,6 @@ const Payment = () => {
           >
             <img src="/ebarimt.png" width={20}></img>ebarimt руу мэдээлэл илгээх
           </Button>
-          <div className="justify-end text-gray-500 font-bold text-sm flex items-center gap-1">
-            <DatabaseBoldDuotone width={14} />
-            {totalCount} өгөгдөл олдсон
-          </div>
         </div>
 
         <Table
@@ -634,19 +637,18 @@ const Payment = () => {
             pageSize: pageSize,
             total: totalCount,
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50"],
+            size: "small",
+            pageSizeOptions: ["10", "20", "50", totalCount],
             onShowSizeChange: (current, size) => {
               console.log(`Size changed to ${size}`);
               setPageSize(size);
               fetchPaymentData(current, size);
             },
+            showTotal: (total, range) =>
+              `${range[0]}-ээс ${range[1]} / Нийт ${total}`,
           }}
           onChange={handleTableChange}
           rowKey={(record) => record.id}
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-            style: { cursor: "pointer" },
-          })}
         />
       </div>
     </ConfigProvider>

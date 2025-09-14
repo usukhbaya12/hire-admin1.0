@@ -9,23 +9,25 @@ import {
   DatePicker,
   Tooltip,
   ConfigProvider,
+  Select,
 } from "antd";
 import {
   ClipboardTextBoldDuotone,
   FolderFavouriteBookmarkBoldDuotone,
-  CalendarBoldDuotone,
   DownloadBoldDuotone,
-  FilterBoldDuotone,
+  CalendarBoldDuotone,
+  MagniferLineDuotone,
+  MagniferBoldDuotone,
 } from "solar-icons";
 import { getAssessmentExams } from "@/app/api/constant";
+import { getAssessments } from "@/app/api/assessment";
 import dayjs from "dayjs";
 import mnMN from "antd/lib/locale/mn_MN";
 import * as XLSX from "xlsx";
 import { customLocale } from "@/utils/values";
 import { getReport } from "@/app/api/assessment";
 import { LoadingOutlined } from "@ant-design/icons";
-
-const { Search } = Input;
+import { DropdownIcon } from "./Icons";
 
 const Results = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -36,20 +38,38 @@ const Results = () => {
   const [pageSize, setPageSize] = useState(10);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedAssessment, setSelectedAssessment] = useState(null);
-  const [sortedInfo, setSortedInfo] = useState({
-    columnKey: "userStartDate",
-    order: "descend",
-  });
+  const [assessmentOptions, setAssessmentOptions] = useState([]);
   const [filteredInfo, setFilteredInfo] = useState({});
   const [startDate, setStartDate] = useState(dayjs().subtract(1, "month"));
   const [endDate, setEndDate] = useState(dayjs());
 
-  const fetchResults = async (page = 1, size = pageSize) => {
+  const fetchAssessments = async () => {
+    try {
+      const response = await getAssessments({
+        limit: 300,
+        page: 1,
+      });
+      if (response.success) {
+        const options = response.data.data.map((assessment) => ({
+          label: assessment.data.name,
+          value: assessment.data.id,
+        }));
+        setAssessmentOptions(options);
+      }
+    } catch (error) {
+      console.error("Error fetching assessments:", error);
+    }
+  };
+
+  const fetchResults = async (
+    page = 1,
+    size = pageSize,
+    search = searchTerm
+  ) => {
     try {
       setLoading(true);
 
       const startDateStr = startDate ? startDate.format("YYYY-MM-DD") : null;
-
       const adjustedEndDate = endDate ? endDate.add(1, "day") : null;
       const endDateStr = adjustedEndDate
         ? adjustedEndDate.format("YYYY-MM-DD")
@@ -59,7 +79,7 @@ const Results = () => {
         selectedAssessment || 0,
         size,
         page,
-        searchTerm,
+        search,
         startDateStr,
         endDateStr
       );
@@ -82,15 +102,17 @@ const Results = () => {
   };
 
   useEffect(() => {
-    fetchResults(1, pageSize);
+    fetchAssessments();
   }, []);
 
-  console.log("hh", examData);
+  useEffect(() => {
+    fetchResults(1, pageSize);
+  }, [selectedAssessment, startDate, endDate]);
 
   const handleSearch = (value) => {
     setSearchTerm(value);
     setCurrentPage(1);
-    fetchResults(1, pageSize);
+    fetchResults(1, pageSize, value);
   };
 
   const handleStartDateChange = (date) => {
@@ -101,18 +123,16 @@ const Results = () => {
     setEndDate(date);
   };
 
-  const applyDateFilters = () => {
+  const handleAssessmentChange = (value) => {
+    setSelectedAssessment(value);
+  };
+
+  const applySearch = () => {
     setCurrentPage(1);
     fetchResults(1, pageSize);
   };
 
-  const handleTableChange = (pagination, filters, sorter) => {
-    const newSortedInfo =
-      Object.keys(sorter).length > 0
-        ? sorter
-        : { columnKey: "userStartDate", order: "descend" };
-
-    setSortedInfo(newSortedInfo);
+  const handleTableChange = (pagination, filters) => {
     setFilteredInfo(filters);
 
     const paginationChanged =
@@ -122,41 +142,12 @@ const Results = () => {
       if (pagination.pageSize !== pageSize) {
         setPageSize(pagination.pageSize);
       }
-
       setCurrentPage(pagination.current);
       fetchResults(pagination.current, pagination.pageSize);
     }
-
-    if (filters.assessmentName && filters.assessmentName.length > 0) {
-      const assessmentId = filters.assessmentName[0];
-      setSelectedAssessment(assessmentId);
-      fetchResults(1, pagination.pageSize);
-    } else if (
-      (!filters.assessmentName || filters.assessmentName.length === 0) &&
-      selectedAssessment !== null
-    ) {
-      setSelectedAssessment(null);
-      fetchResults(1, pagination.pageSize);
-    }
   };
 
-  const clearFilters = () => {
-    setFilteredInfo({});
-    setSortedInfo({ columnKey: "userStartDate", order: "descend" });
-    setStartDate(dayjs().subtract(1, "month"));
-    setEndDate(dayjs());
-    setSelectedAssessment(null);
-    setSearchTerm("");
-    setCurrentPage(1);
-
-    setTimeout(() => {
-      fetchResults(1, pageSize);
-    }, 100);
-  };
-
-  const clearSorters = () => {
-    setSortedInfo({ columnKey: "userStartDate", order: "descend" });
-  };
+  console.log(examData);
 
   const exportToExcel = () => {
     if (examData.length === 0) {
@@ -169,6 +160,8 @@ const Results = () => {
         "№": index + 1,
         "Шалгуулагчийн нэр": `${record.firstname} ${record.lastname}`,
         "Тестийн нэр": record.assessment.name,
+        "Тестийн төрөл":
+          record.assessment.type === 10 ? "Зөв хариулттай" : "Өөрийн үнэлгээ",
         "И-мейл хаяг": record.email,
         "Эхэлсэн огноо": new Date(record.userStartDate).toLocaleString(),
         "Дууссан огноо": record.userEndDate
@@ -176,7 +169,9 @@ const Results = () => {
           : "-",
         Байгууллага: record.buyer?.organizationName || "-",
         Төлөв: record.userEndDate ? "Дууссан" : "Дуусаагүй",
-        "Үр дүн": record.result
+
+        "Үр дүн": record.result?.result ? record.result.result : "",
+        Тайлбар: record.result
           ? record.assessment.report === 10
             ? `${(
                 (record.result.point / record.assessment.total) *
@@ -184,6 +179,9 @@ const Results = () => {
               ).toFixed(1)}%`
             : record.result.value
           : record.result?.value || "-",
+        "Авсан оноо (зөв хариулттай)": record.result?.point
+          ? record.result.point
+          : "",
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -208,27 +206,12 @@ const Results = () => {
       const fileName = `Тест_үр_дүн_${date}.xlsx`;
 
       XLSX.writeFile(workbook, fileName);
-      messageApi.success("Excel файл амжилттай татагдлаа");
+      messageApi.success("Excel файл амжилттай татагдлаа.");
     } catch (error) {
       console.error("Excel export error:", error);
-      messageApi.error("Excel файл үүсгэхэд алдаа гарлаа");
+      messageApi.error("Excel файл үүсгэхэд алдаа гарлаа.");
     }
   };
-
-  const assessmentOptions = useMemo(() => {
-    const uniqueAssessments = new Map();
-
-    examData.forEach((exam) => {
-      if (exam.assessment && !uniqueAssessments.has(exam.assessment.id)) {
-        uniqueAssessments.set(exam.assessment.id, {
-          text: exam.assessment.name,
-          value: exam.assessment.id,
-        });
-      }
-    });
-
-    return Array.from(uniqueAssessments.values());
-  }, [examData]);
 
   const organizationOptions = useMemo(() => {
     const uniqueOrgs = new Map();
@@ -280,11 +263,6 @@ const Results = () => {
           </div>
         );
       },
-      sorter: (a, b) =>
-        `${a.firstname} ${a.lastname}`.localeCompare(
-          `${b.firstname} ${b.lastname}`
-        ),
-      sortOrder: sortedInfo.columnKey === "name" && sortedInfo.order,
     },
     {
       title: "Тестийн нэр",
@@ -293,34 +271,24 @@ const Results = () => {
       render: (_, record) => (
         <div className="font-bold text-main">{record.assessment.name}</div>
       ),
-      filters: assessmentOptions,
-      filteredValue: filteredInfo.assessmentName || null,
-      onFilter: (value, record) => record.assessment.id === value,
-      filterMode: "radio",
-      sorter: (a, b) => a.assessment.name.localeCompare(b.assessment.name),
-      sortOrder: sortedInfo.columnKey === "assessmentName" && sortedInfo.order,
     },
     {
       title: "Эхэлсэн огноо",
       dataIndex: "userStartDate",
       key: "userStartDate",
-      render: (date) => new Date(date).toLocaleString(),
+      render: (date) => (date ? dayjs(date).format("YYYY-MM-DD HH:mm") : "-"),
       sorter: (a, b) => new Date(a.userStartDate) - new Date(b.userStartDate),
-      sortOrder:
-        sortedInfo.columnKey === "userStartDate" ? sortedInfo.order : "descend",
-      defaultSortOrder: "descend",
     },
     {
       title: "Дууссан огноо",
       dataIndex: "userEndDate",
       key: "userEndDate",
-      render: (date) => (date ? new Date(date).toLocaleString() : "-"),
+      render: (date) => (date ? dayjs(date).format("YYYY-MM-DD HH:mm") : "-"),
       sorter: (a, b) => {
         if (!a.userEndDate) return 1;
         if (!b.userEndDate) return -1;
         return new Date(a.userEndDate) - new Date(b.userEndDate);
       },
-      sortOrder: sortedInfo.columnKey === "userEndDate" && sortedInfo.order,
     },
     {
       title: "Байгууллага",
@@ -476,13 +444,6 @@ const Results = () => {
     }
   };
 
-  const isFiltered =
-    selectedAssessment ||
-    startDate ||
-    endDate ||
-    searchTerm ||
-    Object.keys(filteredInfo).length > 0;
-
   return (
     <ConfigProvider locale={mnMN}>
       <div className="px-5 py-6">
@@ -492,7 +453,7 @@ const Results = () => {
             <FolderFavouriteBookmarkBoldDuotone className="text-main" />
             Үр дүн
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <DatePicker
               onChange={handleStartDateChange}
               placeholder="Эхлэх огноо"
@@ -508,48 +469,49 @@ const Results = () => {
                 startDate && current && current < startDate
               }
             />
-            <Button onClick={applyDateFilters} className="back-btn">
-              <CalendarBoldDuotone width={16} />
+            <Select
+              showSearch
+              suffixIcon={
+                <DropdownIcon width={15} height={15} color={"#f36421"} />
+              }
+              placeholder="Тест сонгох"
+              style={{ width: 200 }}
+              allowClear
+              value={selectedAssessment}
+              onChange={handleAssessmentChange}
+              options={assessmentOptions}
+              optionFilterProp="label" // will search inside label field of options
+              filterOption={(input, option) =>
+                (option?.label ?? "")
+                  .toLowerCase()
+                  .includes(input.toLowerCase())
+              }
+            />
+            <Input
+              placeholder="И-мэйл хаяг"
+              allowClear
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onClear={() => {
+                setSearchTerm("");
+                setCurrentPage(1);
+                fetchResults(1, pageSize, "");
+              }}
+              value={searchTerm}
+              style={{ width: 200 }}
+              onPressEnter={applySearch}
+            />
+            <Button onClick={applySearch} className="the-btn">
+              <MagniferBoldDuotone width={16} />
               Хайх
             </Button>
-            <div>
-              <Search
-                placeholder="И-мейл хаягаар хайх"
-                allowClear
-                onSearch={handleSearch}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                enterButton
-                value={searchTerm}
-              />
-            </div>
           </div>
         </div>
 
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex gap-2">
-            <Button
-              className="back-btn"
-              onClick={clearFilters}
-              disabled={!isFiltered}
-            >
-              <FilterBoldDuotone width={16} height={16} />
-              Шүүлтүүр арилгах
-            </Button>
-            <Button
-              onClick={clearSorters}
-              className="back-btn"
-              disabled={Object.keys(sortedInfo).length === 0}
-            >
-              <FilterBoldDuotone width={16} height={16} />
-              Эрэмбэлэлт цуцлах
-            </Button>
-          </div>
-          <div>
-            <Button className="the-btn" onClick={exportToExcel}>
-              <DownloadBoldDuotone width={16} />
-              Excel татах
-            </Button>
-          </div>
+        <div className="mb-4 flex items-center justify-end">
+          <Button className="the-btn" onClick={exportToExcel}>
+            <DownloadBoldDuotone width={16} />
+            Excel татах
+          </Button>
         </div>
 
         <Table
@@ -561,11 +523,14 @@ const Results = () => {
             pageSize: pageSize,
             total: totalCount,
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50"],
+            pageSizeOptions: ["10", "20", "50", totalCount],
             onShowSizeChange: (current, size) => {
               setPageSize(size);
               fetchResults(current, size);
             },
+            size: "small",
+            showTotal: (total, range) =>
+              `${range[0]}-ээс ${range[1]} / Нийт ${total}`,
           }}
           loading={{
             spinning: loading,

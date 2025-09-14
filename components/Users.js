@@ -1,12 +1,25 @@
 import React, { useEffect, useState } from "react";
-import { Table, message, Dropdown, Button, Spin, ConfigProvider } from "antd";
-import { MoreIcon } from "./Icons";
+import {
+  Table,
+  message,
+  Dropdown,
+  Button,
+  Spin,
+  ConfigProvider,
+  Input,
+  Select,
+} from "antd";
+import { DropdownIcon, MoreIcon } from "./Icons";
 import { customLocale } from "@/utils/values";
 import { getUsers } from "@/app/api/constant";
 import { LoadingOutlined } from "@ant-design/icons";
 import UserDetailModal from "./modals/User";
 import mnMN from "antd/lib/locale/mn_MN";
-import { PeopleNearbyBoldDuotone } from "solar-icons";
+import {
+  MagniferLineDuotone,
+  PeopleNearbyBoldDuotone,
+  RestartBold,
+} from "solar-icons";
 
 const Users = () => {
   const [loading, setLoading] = useState(true);
@@ -19,6 +32,19 @@ const Users = () => {
     pageSize: 10,
     total: 0,
   });
+
+  const [searchType, setSearchType] = useState("email");
+  const [searchText, setSearchText] = useState("");
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchText]);
 
   const getActionMenu = (record) => ({
     items: [
@@ -92,11 +118,22 @@ const Users = () => {
   const fetchUsers = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true);
-      const response = await getUsers({
+
+      const params = {
         limit: pageSize,
         page: page,
-        role: 20, // Regular users role
-      });
+        role: 20,
+      };
+
+      if (debouncedSearch) {
+        if (searchType === "name") {
+          params.firstname = debouncedSearch;
+        } else if (searchType === "email") {
+          params.email = debouncedSearch;
+        }
+      }
+
+      const response = await getUsers(params);
 
       if (response.success && response.data) {
         // Handle different possible response structures
@@ -114,7 +151,7 @@ const Users = () => {
         } else if (response.data.data && Array.isArray(response.data.data)) {
           // If response.data has a data property
           usersData = response.data.data;
-          totalCount = response.data.total || response.data.data.length;
+          totalCount = response.data.count || response.data.data.length;
         }
 
         setUsers(usersData);
@@ -138,6 +175,10 @@ const Users = () => {
   };
 
   useEffect(() => {
+    fetchUsers(1, pagination.pageSize);
+  }, [debouncedSearch, searchType]);
+
+  useEffect(() => {
     fetchUsers();
   }, []);
 
@@ -159,10 +200,41 @@ const Users = () => {
       <ConfigProvider locale={mnMN}>
         {contextHolder}
         <div className="p-6">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <div className="text-base font-bold flex items-center gap-2">
               <PeopleNearbyBoldDuotone className="text-main" />
               Бүртгэлтэй хэрэглэгчид
+            </div>
+            <div className="flex gap-2 flex-row">
+              <Select
+                value={searchType}
+                onChange={(value) => setSearchType(value)}
+                suffixIcon={
+                  <DropdownIcon width={15} height={15} color={"#f36421"} />
+                }
+                className="w-36 no-zoom flex-shrink-0"
+                options={[
+                  { value: "email", label: "И-мэйлээр" },
+                  { value: "name", label: "Нэрээр" },
+                ]}
+              />
+              <Input
+                className="max-w-[180px]"
+                prefix={
+                  <MagniferLineDuotone
+                    className="text-gray-400 mr-2"
+                    width={18}
+                    height={18}
+                  />
+                }
+                placeholder="Хайх"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+              />
+              <Button className="the-btn" onClick={() => fetchUsers()}>
+                <RestartBold width={20} />
+              </Button>
             </div>
           </div>
 

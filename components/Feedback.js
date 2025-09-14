@@ -1,70 +1,86 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  Tabs,
-  Table,
-  Spin,
-  Card,
-  Badge,
-  message,
-  Collapse,
-  Empty,
-  Row,
-  Col,
-  ConfigProvider,
-} from "antd";
+import { Table, Spin, message, ConfigProvider, Select } from "antd";
 import { getFeedback } from "@/app/api/constant";
 import mnMN from "antd/lib/locale/mn_MN";
+import { customLocale } from "@/utils/values";
+import { LoadingOutlined } from "@ant-design/icons";
 import {
   ExpressionlessCircle,
+  LightbulbBoltBoldDuotone,
   SadCircle,
   SmileCircle,
-  UsersGroupRoundedBoldDuotone,
 } from "solar-icons";
-import { customLocale } from "@/utils/values";
-import Image from "next/image";
-import { api } from "@/utils/routes";
 import { DropdownIcon } from "./Icons";
-import { LoadingOutlined } from "@ant-design/icons";
 
-const { Panel } = Collapse;
+const { Option } = Select;
 
-const Feedback = () => {
+const GeneralFeedback = () => {
   const [loading, setLoading] = useState(true);
-  const [feedbackType, setFeedbackType] = useState(20); // Default to Санал, хүсэлт
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [testFeedback, setTestFeedback] = useState([]);
   const [generalFeedback, setGeneralFeedback] = useState([]);
-  const [groupedFeedback, setGroupedFeedback] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [messageApi, contextHolder] = message.useMessage();
-  const [activeKey, setActiveKey] = useState("20");
-  const [testTotalCount, setTestTotalCount] = useState(0);
-  const [expandedCards, setExpandedCards] = useState({});
+  const [selectedAssessment, setSelectedAssessment] = useState(null);
+  const [assessments, setAssessments] = useState([]);
+  const [loadingAssessments, setLoadingAssessments] = useState(false);
+  const [statusSummary, setStatusSummary] = useState({
+    smile: 0,
+    meh: 0,
+    bad: 0,
+    avg: 0,
+  });
 
-  const fetchFeedback = async (type) => {
+  const fetchGeneralFeedback = async () => {
     setLoading(true);
     try {
-      // For test feedback (10), use pagination
-      if (type === 10) {
-        const response = await getFeedback(type, currentPage, pageSize);
-        if (response.success) {
-          setTestFeedback(response.data.data || []);
-          setTestTotalCount(response.data.total || 0);
+      const response = await getFeedback({
+        type: 20,
+        page: currentPage,
+        limit: pageSize,
+        assessment: selectedAssessment,
+      });
+
+      if (response.success) {
+        const feedbackData = response.data.data || [];
+        setGeneralFeedback(feedbackData);
+        setTotalCount(response.data.count || 0);
+
+        // 👉 Only calculate summary if a test is selected
+        if (selectedAssessment) {
+          let smile = 0,
+            meh = 0,
+            bad = 0,
+            totalScore = 0;
+
+          feedbackData.forEach((item) => {
+            switch (item.status) {
+              case 10: // smile
+                smile++;
+                totalScore += 3;
+                break;
+              case 20: // meh
+                meh++;
+                totalScore += 2;
+                break;
+              case 30: // bad
+                bad++;
+                totalScore += 1;
+                break;
+            }
+          });
+
+          const total = smile + meh + bad;
+          const avg = total > 0 ? (totalScore / total).toFixed(2) : 0;
+
+          setStatusSummary({ smile, meh, bad, avg });
         } else {
-          messageApi.error(response.message || "Алдаа гарлаа");
+          setStatusSummary({ smile: 0, meh: 0, bad: 0, avg: 0 });
         }
-      }
-      // For general feedback (20), get more data at once (10000 limit)
-      else {
-        const response = await getFeedback(type, 1, 10000);
-        if (response.success) {
-          setGeneralFeedback(response.data.data || []);
-          processGeneralFeedback(response.data.data || []);
-        } else {
-          messageApi.error(response.message || "Алдаа гарлаа");
-        }
+      } else {
+        messageApi.error(response.message || "Алдаа гарлаа");
       }
     } catch (error) {
       console.error(error);
@@ -74,52 +90,104 @@ const Feedback = () => {
     }
   };
 
-  const processGeneralFeedback = (feedback) => {
-    const groupedByAssessment = feedback.reduce((acc, item) => {
-      const assessmentId = item.assessment?.id;
-      if (!assessmentId) return acc;
+  const fetchAssessments = async () => {
+    setLoadingAssessments(true);
+    try {
+      // Fetch a larger dataset to get all unique assessments
+      const response = await getFeedback({
+        type: 20,
+        page: 1,
+        limit: 1000,
+      });
 
-      if (!acc[assessmentId]) {
-        acc[assessmentId] = {
-          assessment: item.assessment,
-          feedbacks: [],
-          stats: { 10: 0, 20: 0, 30: 0, total: 0 },
-        };
+      if (response.success) {
+        const uniqueAssessments = [];
+        const assessmentIds = new Set();
+
+        response.data.data?.forEach((item) => {
+          if (item.assessment && !assessmentIds.has(item.assessment.id)) {
+            assessmentIds.add(item.assessment.id);
+            uniqueAssessments.push({
+              id: item.assessment.id,
+              name: item.assessment.name,
+            });
+          }
+        });
+
+        setAssessments(uniqueAssessments);
       }
-
-      acc[assessmentId].feedbacks.push(item);
-
-      if (item.status) {
-        acc[assessmentId].stats[item.status]++;
-        acc[assessmentId].stats.total++;
-      }
-
-      return acc;
-    }, {});
-
-    const result = Object.values(groupedByAssessment);
-    setGroupedFeedback(result);
+    } catch (error) {
+      console.error("Error fetching assessments:", error);
+    } finally {
+      setLoadingAssessments(false);
+    }
   };
 
   useEffect(() => {
-    fetchFeedback(feedbackType);
-  }, [feedbackType, currentPage, pageSize]);
+    fetchGeneralFeedback();
+  }, [currentPage, pageSize, selectedAssessment]);
 
-  const handleTabChange = (key) => {
-    setFeedbackType(parseInt(key));
-    setCurrentPage(1);
+  useEffect(() => {
+    fetchAssessments();
+  }, []);
+
+  const handlePageChange = (page, size) => {
+    setCurrentPage(page);
+    setPageSize(size);
   };
 
-  const toggleCardExpansion = (assessmentId) => {
-    setExpandedCards((prev) => ({
-      ...prev,
-      [assessmentId]: !prev[assessmentId],
-    }));
+  const handleAssessmentChange = (value) => {
+    setSelectedAssessment(value);
+    setCurrentPage(1); // Reset to first page when filtering
   };
 
-  const testFeedbackColumns = [
+  const renderStatusIcon = (status) => {
+    switch (status) {
+      case 10:
+        return (
+          <SmileCircle className="text-green-500" width={20} height={20} />
+        );
+      case 20:
+        return (
+          <ExpressionlessCircle
+            className="text-yellow-500"
+            width={20}
+            height={20}
+          />
+        );
+      case 30:
+        return <SadCircle className="text-red-500" width={20} height={20} />;
+      default:
+        return null;
+    }
+  };
+
+  const generalFeedbackColumns = [
     {
-      title: "Хэрэглэгч",
+      title: "№",
+      render: (_, __, index) => (currentPage - 1) * pageSize + index + 1,
+      width: 60,
+      align: "center",
+    },
+    {
+      title: "Огноо",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      width: 160,
+      render: (date) => {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const hours = String(d.getHours()).padStart(2, "0");
+        const minutes = String(d.getMinutes()).padStart(2, "0");
+        return `${year}-${month}-${day} ${hours}:${minutes}`;
+      },
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      align: "center",
+    },
+    {
+      title: "Шалгуулагчийн нэр",
       key: "user",
       render: (_, record) => (
         <div className="flex items-center gap-3">
@@ -151,191 +219,77 @@ const Feedback = () => {
       ),
     },
     {
+      title: "Үнэлгээ",
+      dataIndex: "status",
+      key: "status",
+      width: 90,
+      align: "center",
+      render: (status) => (
+        <div className="flex justify-center">{renderStatusIcon(status)}</div>
+      ),
+    },
+    {
       title: "Санал, хүсэлт",
       dataIndex: "message",
       key: "message",
       ellipsis: true,
-    },
-    {
-      title: "Огноо",
-      dataIndex: "createdAt",
-      key: "createdAt",
-      render: (date) => new Date(date).toLocaleDateString(),
+      render: (text) => <div className="max-w-md">{text || "-"}</div>,
     },
   ];
 
-  const renderStatusIcon = (status) => {
-    switch (status) {
-      case 10:
-        return <SmileCircle className="text-green-500" />;
-      case 20:
-        return <ExpressionlessCircle className="text-yellow-500" />;
-      case 30:
-        return <SadCircle className="text-red-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const renderAssessmentCard = (group) => {
-    const hasFeedbackMessages = group.feedbacks.some((f) => f.message?.trim());
-    const isExpanded = expandedCards[group.assessment.id];
-    const iconUrl = group.assessment.icons
-      ? `${api}file/${group.assessment.icons}`
-      : "/placeholder.png";
-
-    return (
-      <Col xs={24} md={12} lg={8} key={group.assessment.id} className="mb-6">
-        <div className="group bg-white backdrop-blur-md overflow-hidden transition-all duration-500 shadow shadow-slate-200 rounded-3xl z-10">
-          <div className="flex flex-col gap-3">
-            <div className="relative aspect-video overflow-hidden rounded-3xl bg-gray-200 max-h-[220px] min-h-[220px] w-full">
-              <Image
-                src={
-                  group.assessment.icons
-                    ? `${api}file/${group.assessment.icons}`
-                    : "/placeholder.png"
-                }
-                alt={group.assessment.name}
-                fill
-                loading="lazy"
-                className={`
-                 object-cover
-                 duration-700 
-                 max-h-[220px] min-h-[220px]
-               `}
-              />
-            </div>
-
-            <div className="space-y-3 pb-5 pt-3 px-9">
-              <h3 className="font-extrabold text-lg transition-colors duration-500 group-hover:text-main leading-5">
-                {group.assessment.name}
-              </h3>
-              <div className="flex justify-between">
-                <p className="leading-6 text-justify text-gray-700 flex items-center gap-1 font-bold text-main">
-                  <UsersGroupRoundedBoldDuotone width={16} />
-                  {group.stats.total} шалгуулагч
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1">
-                    <SmileCircle
-                      className="text-green-500"
-                      width={16}
-                      height={16}
-                    />
-                    <span>{group.stats[10] || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <ExpressionlessCircle
-                      className="text-yellow-500"
-                      width={16}
-                      height={16}
-                    />
-                    <span>{group.stats[20] || 0}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <SadCircle
-                      className="text-red-500"
-                      width={16}
-                      height={16}
-                    />
-                    <span>{group.stats[30] || 0}</span>
-                  </div>
+  return (
+    <ConfigProvider locale={mnMN}>
+      {contextHolder}
+      <div className="px-5 py-6">
+        <div className="flex justify-between items-center mb-4">
+          <div className="text-base font-bold flex items-center gap-2">
+            <LightbulbBoltBoldDuotone className="text-main" />
+            Тестийн тухай санал, хүсэлтүүд
+          </div>
+          <div className="flex items-center gap-2">
+            {selectedAssessment && (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1 text-green-600 font-bold">
+                  <SmileCircle width={20} height={20} /> {statusSummary.smile}
+                </div>
+                <div className="flex items-center gap-1 text-yellow-600 font-bold">
+                  <ExpressionlessCircle width={20} height={20} />{" "}
+                  {statusSummary.meh}
+                </div>
+                <div className="flex items-center gap-1 text-red-600 font-bold">
+                  <SadCircle width={20} height={20} /> {statusSummary.bad}
+                </div>
+                <div className="flex items-center gap-1 font-semibold text-main">
+                  Нийт:{" "}
+                  {statusSummary.smile + statusSummary.meh + statusSummary.bad}{" "}
+                  шалгуулагч, {((statusSummary.avg / 3) * 100).toFixed(1)}%
                 </div>
               </div>
-              {hasFeedbackMessages && (
-                <Collapse
-                  className="no-collapse"
-                  expandIcon={({ isActive }) => (
-                    <DropdownIcon width={15} rotate={isActive ? 0 : -90} />
-                  )}
-                  items={[
-                    {
-                      key: "1",
-                      label: `Санал, хүсэлтүүд (${
-                        group.feedbacks.filter((f) => f.message?.trim()).length
-                      })`,
-                      children: (
-                        <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
-                          {group.feedbacks
-                            .filter((feedback) => feedback.message?.trim())
-                            .map((feedback) => (
-                              <div
-                                key={feedback.id}
-                                className="flex gap-3 bg-white pb-3 border-b border-neutral"
-                              >
-                                <div className="mt-1">
-                                  {renderStatusIcon(feedback.status)}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex flex-wrap items-center gap-2">
-                                    <div className="font-semibold">
-                                      <div>{feedback.user?.email}</div>
-                                    </div>
-
-                                    <div className="text-xs text-gray-500">
-                                      {new Date(
-                                        feedback.createdAt
-                                      ).toLocaleDateString()}
-                                    </div>
-                                  </div>
-                                  <div className="mt-1 text-gray-700">
-                                    {feedback.message}
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                        </div>
-                      ),
-                    },
-                  ]}
-                ></Collapse>
-              )}
-            </div>
+            )}
+            <Select
+              showSearch
+              placeholder="Тест сонгох"
+              suffixIcon={
+                <DropdownIcon width={15} height={15} color={"#f36421"} />
+              }
+              style={{ width: 220 }}
+              allowClear
+              loading={loadingAssessments}
+              value={selectedAssessment}
+              onChange={handleAssessmentChange}
+            >
+              {assessments.map((assessment) => (
+                <Option key={assessment.id} value={assessment.id}>
+                  {assessment.name}
+                </Option>
+              ))}
+            </Select>
           </div>
         </div>
-      </Col>
-    );
-  };
 
-  const renderGeneralFeedbackTab = () => {
-    if (loading) {
-      return (
-        <div className="flex justify-center py-10">
-          <Spin
-            size="default"
-            indicator={
-              <LoadingOutlined
-                style={{ color: "#f26522", fontSize: 24 }}
-                spin
-              />
-            }
-          />
-        </div>
-      );
-    }
-
-    if (groupedFeedback.length === 0) {
-      return <Empty description="Санал хүсэлт алга байна" />;
-    }
-
-    return (
-      <Row gutter={[24, 0]}>{groupedFeedback.map(renderAssessmentCard)}</Row>
-    );
-  };
-
-  const items = [
-    {
-      key: "20",
-      label: "Санал, хүсэлт",
-      children: renderGeneralFeedbackTab(),
-    },
-    {
-      key: "10",
-      label: "Тестийн явцад тулгарсан",
-      children: (
         <Table
-          dataSource={testFeedback}
-          columns={testFeedbackColumns}
+          dataSource={generalFeedback}
+          columns={generalFeedbackColumns}
           rowKey="id"
           loading={{
             spinning: loading,
@@ -355,51 +309,18 @@ const Feedback = () => {
           pagination={{
             current: currentPage,
             pageSize: pageSize,
-            total: testTotalCount,
+            total: totalCount,
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50"],
-            onChange: (page, size) => {
-              setCurrentPage(page);
-              setPageSize(size);
-            },
+            pageSizeOptions: ["10", "20", "50", totalCount],
+            onChange: handlePageChange,
+            size: "small",
+            showTotal: (total, range) =>
+              `${range[0]}-ээс ${range[1]} / Нийт ${total}`,
           }}
         />
-      ),
-    },
-  ];
-
-  return (
-    <>
-      <ConfigProvider locale={mnMN}>
-        {contextHolder}
-        <div className="flex border-b border-neutral pr-6 pl-4 justify-between items-end pt-3">
-          <div className="flex gap-6">
-            {items.map((item) => (
-              <div
-                key={item.key}
-                className={`cursor-pointer p-2 ${
-                  item.key === activeKey
-                    ? "font-bold text-main border-b-2 border-main"
-                    : ""
-                }`}
-                onClick={() => {
-                  setActiveKey(item.key);
-                  handleTabChange(item.key);
-                }}
-              >
-                {item.label}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="pt-6 px-6">
-          {activeKey === "10" && items[1].children}
-          {activeKey === "20" && items[0].children}
-        </div>
-      </ConfigProvider>
-    </>
+      </div>
+    </ConfigProvider>
   );
 };
 
-export default Feedback;
+export default GeneralFeedback;

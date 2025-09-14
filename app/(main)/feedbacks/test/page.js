@@ -2,9 +2,9 @@
 
 import React from "react";
 import Menu from "@/components/Menu";
-import Contact from "@/components/Contact";
+import TestFeedback from "@/components/TestFeedback";
 
-export default function ContactPage() {
+export default function UsersPage() {
   return (
     <>
       <div className="flex">
@@ -12,7 +12,7 @@ export default function ContactPage() {
           <Menu />
         </div>
         <div className="flex-grow ml-[220px]">
-          <Contact type="10" />
+          <TestFeedback />
         </div>
       </div>
     </>

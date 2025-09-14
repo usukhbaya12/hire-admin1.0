@@ -166,7 +166,15 @@ export const createUser = async (userData) => {
   }
 };
 
-export const getUsers = async ({ limit = 10, page = 1, role } = {}) => {
+export const getUsers = async ({
+  limit = 10,
+  page = 1,
+  role,
+  email,
+  orgName,
+  firstname,
+  orgRegister,
+} = {}) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
 
@@ -175,6 +183,10 @@ export const getUsers = async ({ limit = 10, page = 1, role } = {}) => {
     params.append("limit", limit);
     params.append("page", page);
     if (role) params.append("role", role);
+    if (email) params.append("email", email);
+    if (orgName) params.append("orgName", orgName);
+    if (firstname) params.append("firstname", firstname);
+    if (orgRegister) params.append("orgRegister", orgRegister);
 
     const res = await fetch(`${api}user?${params.toString()}`, {
       method: "GET",
@@ -229,12 +241,17 @@ export async function changeUserRole(userId, newRole) {
   }
 }
 
-export const getUserPaymentHistory = async (userId, page, limit) => {
+export const getUserPaymentHistory = async (userId, page = 1, limit = 10) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
 
   try {
-    const res = await fetch(`${api}payment/view/0/${userId}/${page}/${limit}`, {
+    const url = new URL(`${api}payment/view`);
+    url.searchParams.append("limit", limit);
+    url.searchParams.append("page", page);
+    url.searchParams.append("id", userId);
+
+    const res = await fetch(url.toString(), {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -257,8 +274,8 @@ export const getUserPaymentHistory = async (userId, page, limit) => {
 
 export const getAssessmentExams = async (
   assessment = 0,
-  limit,
-  page,
+  limit = 20,
+  page = 1,
   email = "",
   startDate = null,
   endDate = null
@@ -267,21 +284,26 @@ export const getAssessmentExams = async (
     const token = await getAuthToken();
     if (!token) return { token: false };
 
-    const body = {
-      assessment: assessment,
-      email: email,
-      startDate: startDate || null,
-      endDate: endDate || null,
-    };
+    const params = new URLSearchParams({
+      limit: limit.toString(),
+      page: page.toString(),
+    });
 
-    const res = await fetch(`${api}exam/all/${limit}/${page}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(body),
-    }).then((d) => d.json());
+    if (assessment) params.append("assessment", assessment.toString());
+    if (email) params.append("email", email);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+
+    const res = await fetch(
+      `${api}exam/all/${limit}/${page}?${params.toString()}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    ).then((d) => d.json());
 
     return {
       data: res.payload,
@@ -292,7 +314,6 @@ export const getAssessmentExams = async (
     };
   } catch (error) {
     console.error(error);
-
     return {
       success: false,
       message:
@@ -301,21 +322,29 @@ export const getAssessmentExams = async (
   }
 };
 
-export const getFeedback = async (type, page, limit) => {
+export const getFeedback = async ({
+  type,
+  page = 1,
+  limit = 20,
+  assessment,
+}) => {
   try {
     const token = await getAuthToken();
     if (!token) return { token: false };
 
-    const response = await fetch(
-      `${api}feedback/all/0/${type}/${page}/${limit}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    ).then((d) => d.json());
+    const params = new URLSearchParams();
+    params.append("page", page);
+    params.append("limit", limit);
+    if (type) params.append("type", type);
+    if (assessment) params.append("assessment", assessment);
+
+    const response = await fetch(`${api}feedback/all?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }).then((d) => d.json());
 
     return {
       data: response.payload,
@@ -343,26 +372,30 @@ export const getPaymentHistory = async (
   endDate,
   role,
   assessmentId,
-  paymentMethod
+  method,
+  assessmentName
 ) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
-  try {
-    const body = {
-      startDate: startDate || null,
-      endDate: endDate || null,
-      role: role || null,
-      assessmentId: assessmentId || null,
-      paymentMethod: paymentMethod || null,
-    };
 
-    const res = await fetch(`${api}payment/all?limit=${limit}&page=${page}`, {
+  try {
+    const params = new URLSearchParams();
+
+    if (limit) params.append("limit", limit);
+    if (page) params.append("page", page);
+    if (role) params.append("role", role);
+    if (assessmentId) params.append("assessmentId", assessmentId);
+    if (assessmentName) params.append("assessmentName", assessmentName);
+    if (method) params.append("method", method);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+
+    const res = await fetch(`${api}payment/all?${params.toString()}`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(body),
     }).then((d) => d.json());
 
     return {
@@ -373,7 +406,7 @@ export const getPaymentHistory = async (
       success: res.succeed,
     };
   } catch (error) {
-    console.error(error);
+    console.error("Error fetching payment history:", error);
     return {
       success: false,
       message: "Сервертэй холбогдоход алдаа гарлаа",
@@ -542,11 +575,66 @@ export const deleteBlogById = async (id) => {
   }
 };
 
-export const getContact = async () => {
+export const getEmails = async ({
+  page = 1,
+  limit = 20,
+  user = null,
+  status = null,
+  type = null,
+  startDate = null,
+  endDate = null,
+}) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
+
   try {
-    const res = await fetch(`${api}feedback/contact`, {
+    const params = new URLSearchParams();
+    params.append("page", page);
+    params.append("limit", limit);
+    if (user) params.append("user", user);
+    if (status) params.append("status", status);
+    if (type) params.append("type", type);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+
+    const res = await fetch(`${api}email_log/all?${params.toString()}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }).then((d) => d.json());
+
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error("Error fetching emails:", error);
+    return {
+      data: null,
+      token: true,
+      message: "Сервертэй холбогдоход алдаа гарлаа",
+      status: 500,
+      success: false,
+    };
+  }
+};
+
+export const getContact = async (page = 1, limit = 10, type = null) => {
+  const token = await getAuthToken();
+  if (!token) return { token: false };
+
+  try {
+    let url = `${api}feedback/contact?page=${page}&limit=${limit}`;
+    if (type) {
+      url += `&type=${type}`;
+    }
+
+    const res = await fetch(url, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${token}`,

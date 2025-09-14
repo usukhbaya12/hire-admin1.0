@@ -8,6 +8,7 @@ import { Divider } from "antd";
 import {
   FolderFavouriteBookmarkBoldDuotone,
   HandShakeBoldDuotone,
+  LetterBoldDuotone,
   LightbulbBoltBoldDuotone,
   MoneyBagBoldDuotone,
   NotesBoldDuotone,
@@ -46,8 +47,8 @@ const Menu = () => {
       name: "Санал, хүсэлт",
       key: "feedbacks",
       subMenu: [
-        { name: "Тестийн тухай", href: "/feedbacks/test" },
-        { name: "Тестийн явцад тулгарсан", href: "/feedbacks/process" },
+        { name: "Тестийн тухай", href: "/feedbacks" },
+        { name: "Тестийн явцад тулгарсан", href: "/feedbacks/test" },
       ],
       icon: <LightbulbBoltBoldDuotone width={18} />,
     },
@@ -64,13 +65,19 @@ const Menu = () => {
       icon: <PenNewRoundBoldDuotone width={18} />,
     },
     {
+      name: "И-мэйл жагсаалт",
+      key: "email",
+      href: "/email",
+      icon: <LetterBoldDuotone width={18} />,
+    },
+    {
       name: "Холбогдох",
       key: "contact",
       subMenu: [
-        { name: "Тест нийлүүлэх", href: "/contact/supply" },
-        { name: "Хамтран ажиллах", href: "/contact/collaborate" },
-        { name: "Тестийн талаарх санал хүсэлт", href: "/contact/feedback" },
-        { name: "Бусад", href: "/contact/others" },
+        { name: "Тест нийлүүлэх", href: "/contact" },
+        { name: "Хамтран ажиллах", href: "/contact/collab" },
+        { name: "Тестийн талаарх санал хүсэлт", href: "/contact/test" },
+        { name: "Бусад", href: "/contact/other" },
       ],
       icon: <HandShakeBoldDuotone width={18} />,
     },
@@ -88,7 +95,12 @@ const Menu = () => {
       <div className="flex-col flex gap-1 px-3">
         {menuItems.map((item) => {
           const hasSubMenu = item.subMenu && item.subMenu.length > 0;
-          const isOpen = openMenu === item.key;
+
+          const isSubActive =
+            hasSubMenu &&
+            item.subMenu.some((sub) => pathname.startsWith(sub.href));
+
+          const isOpen = openMenu === item.key || isSubActive;
 
           return (
             <div key={item.key}>
@@ -98,13 +110,13 @@ const Menu = () => {
                   hasSubMenu ? setOpenMenu(isOpen ? null : item.key) : null
                 }
                 className={`flex justify-between items-center cursor-pointer rounded-3xl px-2
-                  hover:bg-gray-100 transition-colors
-                  ${
-                    !hasSubMenu && isActive(item.href)
-                      ? "bg-main/10 text-main font-semibold"
-                      : ""
-                  }
-                  ${hasSubMenu && isOpen ? "bg-gray-100 font-semibold" : ""}`}
+          hover:bg-gray-100 transition-colors
+          ${
+            !hasSubMenu && isActive(item.href)
+              ? "bg-main/10 text-main font-semibold"
+              : ""
+          }
+          ${hasSubMenu && isOpen ? "bg-gray-100 font-semibold" : ""}`}
               >
                 {hasSubMenu ? (
                   <div className="px-4 py-2 w-full flex items-center gap-2 text-[#444]">
@@ -141,12 +153,12 @@ const Menu = () => {
                       key={sub.href}
                       href={sub.href}
                       className={`px-3 py-1.5 rounded-3xl mr-0.75 transition-colors
-                        hover:bg-gray-100 hover:text-main
-                        ${
-                          isActive(sub.href)
-                            ? "bg-main/10 text-main font-semibold"
-                            : "text-[#555]"
-                        }`}
+                hover:bg-gray-100 hover:text-main
+                ${
+                  isActive(sub.href)
+                    ? "bg-main/10 text-main font-semibold"
+                    : "text-[#555]"
+                }`}
                     >
                       {sub.name}
                     </Link>

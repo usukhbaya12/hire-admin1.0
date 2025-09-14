@@ -1,12 +1,27 @@
 import React, { useEffect, useState } from "react";
-import { Table, message, Dropdown, Button, Spin, ConfigProvider } from "antd";
-import { MoreIcon } from "./Icons";
+import {
+  Table,
+  message,
+  Dropdown,
+  Button,
+  Spin,
+  ConfigProvider,
+  Input,
+  Select,
+} from "antd";
+import { DropdownIcon, MoreIcon } from "./Icons";
 import { customLocale } from "@/utils/values";
 import { getUsers } from "@/app/api/constant";
 import { LoadingOutlined } from "@ant-design/icons";
 import UserDetailModal from "./modals/User";
 import mnMN from "antd/lib/locale/mn_MN";
-import { Buildings2BoldDuotone } from "solar-icons";
+import {
+  Buildings2BoldDuotone,
+  MagniferLineDuotone,
+  RefreshBoldDuotone,
+  RefreshCircleBoldDuotone,
+  RestartBold,
+} from "solar-icons";
 
 const Organizations = () => {
   const [loading, setLoading] = useState(true);
@@ -19,6 +34,19 @@ const Organizations = () => {
     pageSize: 10,
     total: 0,
   });
+
+  const [searchType, setSearchType] = useState("name");
+  const [searchText, setSearchText] = useState("");
+
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchText);
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(handler);
+  }, [searchText]);
 
   const getActionMenu = (record) => ({
     items: [
@@ -80,7 +108,8 @@ const Organizations = () => {
     {
       title: "Бүртгүүлсэн огноо",
       dataIndex: "createdAt",
-      render: (date) => new Date(date).toLocaleDateString(),
+      render: (date) =>
+        date ? new Date(date).toISOString().split("T")[0] : "-",
       sorter: true,
       align: "center",
     },
@@ -119,11 +148,23 @@ const Organizations = () => {
   const fetchOrganizations = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true);
-      const response = await getUsers({
+
+      const params = {
         limit: pageSize,
         page: page,
         role: 30,
-      });
+      };
+
+      // ✅ add search filter
+      if (debouncedSearch) {
+        if (searchType === "name") {
+          params.orgName = debouncedSearch;
+        } else if (searchType === "register") {
+          params.orgRegister = debouncedSearch;
+        }
+      }
+
+      const response = await getUsers(params);
 
       if (response.success && response.data) {
         let organizationsData = [];
@@ -137,14 +178,14 @@ const Organizations = () => {
           totalCount = response.data.total || response.data.users.length;
         } else if (response.data.data && Array.isArray(response.data.data)) {
           organizationsData = response.data.data;
-          totalCount = response.data.total || response.data.data.length;
+          totalCount = response.data.count || response.data.data.length;
         }
 
         setOrganizations(organizationsData);
         setPagination((prev) => ({
           ...prev,
           current: page,
-          pageSize: pageSize,
+          pageSize,
           total: totalCount,
         }));
       } else {
@@ -160,11 +201,16 @@ const Organizations = () => {
     }
   };
 
+  // ✅ Fetch when search changes
+  useEffect(() => {
+    fetchOrganizations(1, pagination.pageSize);
+  }, [debouncedSearch, searchType]);
+
   useEffect(() => {
     fetchOrganizations();
   }, []);
 
-  const handleTableChange = (paginationParams, filters, sorter) => {
+  const handleTableChange = (paginationParams) => {
     fetchOrganizations(paginationParams.current, paginationParams.pageSize);
   };
 
@@ -182,10 +228,41 @@ const Organizations = () => {
       <ConfigProvider locale={mnMN}>
         {contextHolder}
         <div className="p-6">
-          <div className="mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <div className="text-base font-bold flex items-center gap-2">
-              <Buildings2BoldDuotone className="text-main" />
+              <Buildings2BoldDuotone className="text-blue-600" />
               Бүртгэлтэй байгууллагууд
+            </div>
+            <div className="flex gap-2 flex-row">
+              <Select
+                value={searchType}
+                onChange={(value) => setSearchType(value)}
+                suffixIcon={
+                  <DropdownIcon width={15} height={15} color={"#f36421"} />
+                }
+                className="w-36 no-zoom flex-shrink-0"
+                options={[
+                  { value: "name", label: "Нэрээр" },
+                  { value: "register", label: "Регистрээр" },
+                ]}
+              />
+              <Input
+                className="max-w-[180px]"
+                prefix={
+                  <MagniferLineDuotone
+                    className="text-gray-400 mr-2"
+                    width={18}
+                    height={18}
+                  />
+                }
+                placeholder="Хайх"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                allowClear
+              />
+              <Button className="the-btn" onClick={() => fetchOrganizations()}>
+                <RestartBold width={20} />
+              </Button>
             </div>
           </div>
 
@@ -194,7 +271,7 @@ const Organizations = () => {
               ...pagination,
               showSizeChanger: true,
               size: "small",
-              pageSizeOptions: ["10", "20", "50", pagination.total],
+              pageSizeOptions: ["10", "20", "50", pagination.total.toString()],
               showTotal: (total, range) =>
                 `${range[0]}-ээс ${range[1]} / Нийт ${total}`,
             }}

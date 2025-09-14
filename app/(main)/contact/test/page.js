@@ -12,7 +12,7 @@ export default function ContactPage() {
           <Menu />
         </div>
         <div className="flex-grow ml-[220px]">
-          <Contact type="10" />
+          <Contact type="30" />
         </div>
       </div>
     </>

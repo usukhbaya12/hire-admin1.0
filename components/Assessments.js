@@ -149,7 +149,7 @@ const Assessments = ({ initialAssessments, initialCategories }) => {
       });
 
       if (assessmentsRes.success) {
-        setAssessments(assessmentsRes.data?.res || []);
+        setAssessments(assessmentsRes.data?.data || []);
         setPagination((prev) => ({
           ...prev,
           total: assessmentsRes.data?.count || 0,

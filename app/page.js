@@ -9,7 +9,7 @@ export default async function Home() {
   const assessmentsRes = await getAssessments();
   const categoriesRes = await getAssessmentCategory();
 
-  const sortedAssessments = (assessmentsRes.data?.res || []).sort(
+  const sortedAssessments = (assessmentsRes.data?.data || []).sort(
     (a, b) =>
       new Date(b.data.createdAt).getTime() -
       new Date(a.data.createdAt).getTime()

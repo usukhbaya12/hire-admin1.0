@@ -108,7 +108,7 @@ export default function Signin() {
                     {
                       required: true,
                       type: "email",
-                      message: "И-мейл хаягаа оруулна уу.",
+                      message: "И-мэйл хаягаа оруулна уу.",
                     },
                   ]}
                   validateTrigger="onFinish"
@@ -121,7 +121,7 @@ export default function Signin() {
                         height={18}
                       />
                     }
-                    placeholder="И-мейл хаяг"
+                    placeholder="И-мэйл хаяг"
                   />
                 </Form.Item>
 

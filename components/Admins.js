@@ -10,13 +10,15 @@ import {
   Select,
   Divider,
   Spin,
+  ConfigProvider,
 } from "antd";
 import { MoreIcon, PlusIcon } from "./Icons";
 import { customLocale } from "@/utils/values";
 import { getUsers, createUser } from "@/app/api/constant";
-import { AccessibilityBoldDuotone } from "solar-icons";
+import { AccessibilityBoldDuotone, SettingsBoldDuotone } from "solar-icons";
 import { LoadingOutlined } from "@ant-design/icons";
 import UserDetailModal from "./modals/User";
+import mnMN from "antd/lib/locale/mn_MN";
 
 const Admins = () => {
   const [loading, setLoading] = useState(true);
@@ -91,8 +93,10 @@ const Admins = () => {
     {
       title: "Бүртгүүлсэн огноо",
       dataIndex: "createdAt",
-      render: (date) => new Date(date).toLocaleDateString(),
+      render: (date) =>
+        date ? new Date(date).toISOString().split("T")[0] : "-",
       sorter: true,
+      align: "center",
     },
     {
       title: "",
@@ -124,25 +128,36 @@ const Admins = () => {
   const fetchAdmins = async (page = 1, pageSize = 10) => {
     try {
       setLoading(true);
-      // For admin roles, we need to fetch multiple roles
-      // Since your API might not support multiple roles in one call,
-      // we'll need to make separate calls or modify the API
-      // For now, let's assume we can pass comma-separated roles or handle it differently
       const response = await getUsers({
         limit: pageSize,
         page: page,
-        role: "10,40,50", // Admin roles - you might need to adjust this based on your API
+        role: 35,
       });
 
-      if (response.success) {
-        setAdmins(response.data.users || response.data);
+      if (response.success && response.data) {
+        let organizationsData = [];
+        let totalCount = 0;
+
+        if (Array.isArray(response.data)) {
+          organizationsData = response.data;
+          totalCount = response.data.length;
+        } else if (response.data.users && Array.isArray(response.data.users)) {
+          organizationsData = response.data.users;
+          totalCount = response.data.total || response.data.users.length;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          organizationsData = response.data.data;
+          totalCount = response.data.count || response.data.data.length;
+        }
+
+        setAdmins(organizationsData);
         setPagination((prev) => ({
           ...prev,
           current: page,
-          pageSize: pageSize,
-          total: response.data.total || response.data.length,
+          pageSize,
+          total: totalCount,
         }));
       } else {
+        setAdmins([]);
         messageApi.error(response.message || "Өгөгдөл татахад алдаа гарлаа.");
       }
     } catch (error) {
@@ -194,157 +209,164 @@ const Admins = () => {
 
   return (
     <>
-      {contextHolder}
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold">Админ эрхтэй</h1>
-          <Button
-            onClick={() => setAddUserVisible(true)}
-            className="the-btn"
-            icon={<PlusIcon width={18} color={"#f36421"} />}
-          >
-            Админ нэмэх
-          </Button>
+      <ConfigProvider locale={mnMN}>
+        {contextHolder}
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <div className="text-base font-bold flex items-center gap-2">
+              <SettingsBoldDuotone className="text-main" />
+              Идэвхтэй админууд
+            </div>
+            <Button
+              onClick={() => setAddUserVisible(true)}
+              className="the-btn"
+              icon={<PlusIcon width={18} color={"#f36421"} />}
+            >
+              Админ нэмэх
+            </Button>
+          </div>
+
+          <Table
+            pagination={{
+              ...pagination,
+              showSizeChanger: true,
+              size: "small",
+              showTotal: (total, range) =>
+                `${range[0]}-ээс ${range[1]} / Нийт ${total}`,
+            }}
+            columns={adminColumns}
+            dataSource={admins}
+            locale={customLocale}
+            rowKey="id"
+            onRow={(record) => ({
+              onClick: () => handleRowClick(record),
+              className: "cursor-pointer hover:bg-gray-50",
+            })}
+            onChange={handleTableChange}
+            loading={{
+              spinning: loading,
+              indicator: (
+                <Spin
+                  size="default"
+                  indicator={
+                    <LoadingOutlined
+                      style={{ color: "#f26522", fontSize: 24 }}
+                      spin
+                    />
+                  }
+                />
+              ),
+            }}
+          />
         </div>
 
-        <Table
-          pagination={{
-            ...pagination,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} / ${total} админ`,
+        {/* User Detail Modal */}
+        <UserDetailModal
+          user={selectedUser}
+          visible={userModalVisible}
+          onClose={() => {
+            setUserModalVisible(false);
+            setSelectedUser(null);
           }}
-          columns={adminColumns}
-          dataSource={admins}
-          locale={customLocale}
-          rowKey="id"
-          onRow={(record) => ({
-            onClick: () => handleRowClick(record),
-            className: "cursor-pointer hover:bg-gray-50",
-          })}
-          onChange={handleTableChange}
-          loading={{
-            spinning: loading,
-            indicator: (
-              <Spin
-                size="default"
-                indicator={
-                  <LoadingOutlined
-                    style={{ color: "#f26522", fontSize: 24 }}
-                    spin
-                  />
-                }
-              />
-            ),
-          }}
+          onSuccess={handleModalSuccess}
         />
-      </div>
 
-      {/* User Detail Modal */}
-      <UserDetailModal
-        user={selectedUser}
-        visible={userModalVisible}
-        onClose={() => {
-          setUserModalVisible(false);
-          setSelectedUser(null);
-        }}
-        onSuccess={handleModalSuccess}
-      />
-
-      {/* Add Admin User Modal */}
-      <Modal
-        title={
-          <div className="flex items-center gap-2">
-            <AccessibilityBoldDuotone className="text-main" width={20} />
-            <span>Админ нэмэх</span>
-          </div>
-        }
-        open={addUserVisible}
-        onCancel={() => {
-          form.resetFields();
-          setAddUserVisible(false);
-        }}
-        footer={null}
-        width={380}
-      >
-        <Divider className="modal-div" />
-
-        <Form form={form} layout="vertical" onFinish={onAddAdmin}>
-          <div>
-            <Form.Item
-              label="Овог"
-              name="lastname"
-              rules={[{ required: true, message: "Овог оруулна уу." }]}
-            >
-              <Input />
-            </Form.Item>
-
-            <Form.Item
-              label="Нэр"
-              name="firstname"
-              rules={[{ required: true, message: "Нэр оруулна уу." }]}
-            >
-              <Input />
-            </Form.Item>
-
-            <Form.Item
-              validateTrigger="onFinish"
-              label="И-мейл хаяг"
-              name="email"
-              rules={[
-                { required: true, message: "И-мейл хаяг оруулна уу." },
-                { type: "email", message: "И-мейл хаяг буруу байна." },
-              ]}
-            >
-              <Input />
-            </Form.Item>
-
-            <Form.Item
-              label="Утасны дугаар"
-              name="phone"
-              rules={[{ required: true, message: "Утасны дугаар оруулна уу." }]}
-            >
-              <Input />
-            </Form.Item>
-
-            <Form.Item
-              label="Нууц үг"
-              name="password"
-              rules={[{ required: true, message: "Нууц үг оруулна уу." }]}
-            >
-              <Input.Password />
-            </Form.Item>
-
-            <Form.Item
-              label="Эрх"
-              name="role"
-              rules={[{ required: true, message: "Эрх сонгоно уу." }]}
-            >
-              <Select options={adminRoles} placeholder="Эрх сонгох" />
-            </Form.Item>
-
-            <div className="flex gap-3 justify-end mt-6">
-              <Button
-                onClick={() => {
-                  form.resetFields();
-                  setAddUserVisible(false);
-                }}
-                className="back-btn"
-              >
-                Цуцлах
-              </Button>
-              <Button
-                loading={createLoading}
-                htmlType="submit"
-                className="the-btn"
-              >
-                Нэмэх
-              </Button>
+        {/* Add Admin User Modal */}
+        <Modal
+          title={
+            <div className="flex items-center gap-2">
+              <AccessibilityBoldDuotone className="text-main" width={20} />
+              <span>Админ нэмэх</span>
             </div>
-          </div>
-        </Form>
-      </Modal>
+          }
+          open={addUserVisible}
+          onCancel={() => {
+            form.resetFields();
+            setAddUserVisible(false);
+          }}
+          footer={null}
+          width={380}
+        >
+          <Divider className="modal-div" />
+
+          <Form form={form} layout="vertical" onFinish={onAddAdmin}>
+            <div>
+              <Form.Item
+                label="Овог"
+                name="lastname"
+                rules={[{ required: true, message: "Овог оруулна уу." }]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                label="Нэр"
+                name="firstname"
+                rules={[{ required: true, message: "Нэр оруулна уу." }]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                validateTrigger="onFinish"
+                label="И-мэйл хаяг"
+                name="email"
+                rules={[
+                  { required: true, message: "И-мэйл хаяг оруулна уу." },
+                  { type: "email", message: "И-мэйл хаяг буруу байна." },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                label="Утасны дугаар"
+                name="phone"
+                rules={[
+                  { required: true, message: "Утасны дугаар оруулна уу." },
+                ]}
+              >
+                <Input />
+              </Form.Item>
+
+              <Form.Item
+                label="Нууц үг"
+                name="password"
+                rules={[{ required: true, message: "Нууц үг оруулна уу." }]}
+              >
+                <Input.Password />
+              </Form.Item>
+
+              <Form.Item
+                label="Эрх"
+                name="role"
+                rules={[{ required: true, message: "Эрх сонгоно уу." }]}
+              >
+                <Select options={adminRoles} placeholder="Эрх сонгох" />
+              </Form.Item>
+
+              <div className="flex gap-3 justify-end mt-6">
+                <Button
+                  onClick={() => {
+                    form.resetFields();
+                    setAddUserVisible(false);
+                  }}
+                  className="back-btn"
+                >
+                  Цуцлах
+                </Button>
+                <Button
+                  loading={createLoading}
+                  htmlType="submit"
+                  className="the-btn"
+                >
+                  Нэмэх
+                </Button>
+              </div>
+            </div>
+          </Form>
+        </Modal>
+      </ConfigProvider>
     </>
   );
 };
