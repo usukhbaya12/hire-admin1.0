@@ -65,7 +65,7 @@ const Organizations = () => {
     {
       title: "Байгууллагын нэр",
       dataIndex: "organizationName",
-      sorter: true,
+      // sorter: true,
       render: (text, record) => (
         <div className="flex items-center gap-3">
           <div className="relative group">
@@ -90,7 +90,7 @@ const Organizations = () => {
     {
       title: "Холбогдох ажилтан",
       dataIndex: "firstname",
-      sorter: true,
+      // sorter: true,
       render: (text, record) => (
         <div className="leading-4">
           <div className="font-semibold">
@@ -110,7 +110,7 @@ const Organizations = () => {
       dataIndex: "createdAt",
       render: (date) =>
         date ? new Date(date).toISOString().split("T")[0] : "-",
-      sorter: true,
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
       align: "center",
     },
     {
@@ -121,7 +121,7 @@ const Organizations = () => {
           {wallet?.toLocaleString()}₮
         </div>
       ),
-      sorter: true,
+      sorter: (a, b) => (a.wallet || 0) - (b.wallet || 0),
       align: "center",
     },
     {

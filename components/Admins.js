@@ -95,7 +95,7 @@ const Admins = () => {
       dataIndex: "createdAt",
       render: (date) =>
         date ? new Date(date).toISOString().split("T")[0] : "-",
-      sorter: true,
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
       align: "center",
     },
     {
@@ -230,6 +230,7 @@ const Admins = () => {
             pagination={{
               ...pagination,
               showSizeChanger: true,
+              pageSizeOptions: ["10", "20", "50", pagination.total],
               size: "small",
               showTotal: (total, range) =>
                 `${range[0]}-ээс ${range[1]} / Нийт ${total}`,

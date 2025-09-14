@@ -15,7 +15,7 @@ import mnMN from "antd/lib/locale/mn_MN";
 import { LoadingOutlined } from "@ant-design/icons";
 import { LetterBoldDuotone, MagniferBoldDuotone } from "solar-icons";
 import dayjs from "dayjs";
-import { getEmails } from "@/app/api/constant";
+import { getEmails, sendEmail } from "@/app/api/constant";
 import { customLocale } from "@/utils/values";
 
 const typeMap = {
@@ -46,13 +46,13 @@ const Email = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalCount, setTotalCount] = useState(0);
   const [startDate, setStartDate] = useState(dayjs().subtract(1, "month"));
-  const [endDate, setEndDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs().add(1, "day"));
   const [emailInput, setEmailInput] = useState("");
   const [userFilter, setUserFilter] = useState(null);
   const [filteredInfo, setFilteredInfo] = useState({});
   const [messageApi, contextHolder] = message.useMessage();
+  const [resendLoading, setResendLoading] = useState({});
 
-  // Debounced email filter
   const debounceTimeout = React.useRef(null);
 
   const debouncedSetUserFilter = useCallback((value) => {
@@ -102,12 +102,10 @@ const Email = () => {
     }
   };
 
-  // Auto-fetch when dates or email filter changes
   useEffect(() => {
     fetchEmails(1, pageSize, filteredInfo);
   }, [startDate, endDate, userFilter]);
 
-  // Clean up timeout on unmount
   useEffect(() => {
     return () => {
       if (debounceTimeout.current) {
@@ -220,12 +218,33 @@ const Email = () => {
       dataIndex: "action",
       key: "action",
       width: 120,
-      render: (text) => (
-        <Button className="the-btn !px-3 !py-1" size="small">
+      align: "center",
+      render: (_, record) => (
+        <Button
+          className="the-btn !px-3 !py-1"
+          loading={resendLoading[record.id] || false}
+          onClick={async () => {
+            setResendLoading((prev) => ({ ...prev, [record.id]: true }));
+            try {
+              const res = await sendEmail(record.type, record.id);
+              if (res.success) {
+                messageApi.success(res.message || "Амжилттай илгээсэн.");
+                // Refetch table data to reflect updated status
+                fetchEmails(currentPage, pageSize, filteredInfo);
+              } else {
+                messageApi.error(res.message || "Алдаа гарлаа.");
+              }
+            } catch (error) {
+              console.error(error);
+              messageApi.error("Сервертэй холбогдоход алдаа гарлаа.");
+            } finally {
+              setResendLoading((prev) => ({ ...prev, [record.id]: false }));
+            }
+          }}
+        >
           Дахин илгээх
         </Button>
       ),
-      align: "center",
     },
   ];
 
@@ -293,7 +312,7 @@ const Email = () => {
             pageSize,
             total: totalCount,
             showSizeChanger: true,
-            pageSizeOptions: ["10", "20", "50", "100"],
+            pageSizeOptions: ["10", "20", "50", "100", totalCount],
             size: "small",
             showTotal: (total, range) =>
               `${range[0]}-ээс ${range[1]} / Нийт ${total}`,

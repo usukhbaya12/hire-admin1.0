@@ -59,7 +59,7 @@ const Payment = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [startDate, setStartDate] = useState(dayjs().subtract(1, "month"));
-  const [endDate, setEndDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs().add(1, "day"));
   const [sortedInfo, setSortedInfo] = useState({
     columnKey: "createdAt",
     order: "descend",

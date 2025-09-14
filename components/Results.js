@@ -41,7 +41,7 @@ const Results = () => {
   const [assessmentOptions, setAssessmentOptions] = useState([]);
   const [filteredInfo, setFilteredInfo] = useState({});
   const [startDate, setStartDate] = useState(dayjs().subtract(1, "month"));
-  const [endDate, setEndDate] = useState(dayjs());
+  const [endDate, setEndDate] = useState(dayjs().add(1, "day"));
 
   const fetchAssessments = async () => {
     try {

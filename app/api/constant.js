@@ -241,6 +241,33 @@ export async function changeUserRole(userId, newRole) {
   }
 }
 
+export const sendEmail = async (type, id) => {
+  try {
+    const token = await getAuthToken();
+    let res = await fetch(`${api}email_log/send/${type}/${id}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }).then((d) => d.json());
+
+    return {
+      data: res.payload,
+      token: true,
+      message: res?.message,
+      status: res?.status,
+      success: res.succeed,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      success: false,
+      message: "Сервертэй холбогдоход алдаа гарлаа.",
+    };
+  }
+};
+
 export const getUserPaymentHistory = async (userId, page = 1, limit = 10) => {
   const token = await getAuthToken();
   if (!token) return { token: false };

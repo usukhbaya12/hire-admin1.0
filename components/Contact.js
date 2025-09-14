@@ -191,7 +191,7 @@ const Contact = ({ type }) => {
                 total: totalCount,
                 showSizeChanger: true,
                 size: "small",
-                pageSizeOptions: ["10", "20", "50"],
+                pageSizeOptions: ["10", "20", "50", totalCount],
                 showTotal: (total, range) =>
                   `${range[0]}-ээс ${range[1]} / Нийт ${total}`,
                 onShowSizeChange: (current, size) => {
