@@ -7,6 +7,7 @@ import { deleteAnswerById } from "@/app/api/assessment";
 import {
   PenBoldDuotone,
   TagBoldDuotone,
+  TagLineDuotone,
   TrashBin2BoldDuotone,
 } from "solar-icons";
 
@@ -100,8 +101,8 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
           label: (
             <div>
               <div className="flex items-center gap-2">
-                <TagBoldDuotone width={16} className="text-gray-400" />
-                <span className="text-gray-600 font-medium">
+                <TagLineDuotone width={16} className="text-blue-800" />
+                <span className="font-semibold text-blue-800 text-sm">
                   {category.name}
                 </span>
               </div>
@@ -229,10 +230,10 @@ const MatrixGrid = ({ question, onUpdate, assessmentData }) => {
                 {point.category ? (
                   <Tooltip title="Ангилал устгах">
                     <div
-                      className="flex items-center gap-1 bg-blue-100 px-2 py-0.5 rounded-md text-sm cursor-pointer hover:bg-blue-200 mt-1"
+                      className="bg-blue-100 px-2.5 py-0.5 gap-2 rounded-full text-sm font-semibold flex items-center text-blue-800"
                       onClick={() => handleRemoveCategory(index)}
                     >
-                      <TagBoldDuotone width={14} />
+                      <TagLineDuotone width={14} className="text-blue-800" />
                       {point.categoryName || point.category?.name}
                     </div>
                   </Tooltip>

@@ -19,7 +19,6 @@ import {
   GalleryCircleBoldDuotone,
   Pen2BoldDuotone,
   SortHorizontalBoldDuotone,
-  TagBoldDuotone,
   TagLineDuotone,
   TrashBin2BoldDuotone,
 } from "solar-icons";

@@ -159,13 +159,6 @@ const Payment = () => {
       );
 
       if (response.success) {
-        console.log("API Response:", {
-          requestedPageSize: size,
-          returnedDataLength: response.data.data?.length || 0,
-          totalCount: response.data.total || 0,
-          actualData: response.data.data,
-        });
-
         setData(response.data);
         setPayments(response.data.data || []);
         setTotalCount(response.data.count || 0);
@@ -640,7 +633,6 @@ const Payment = () => {
             size: "small",
             pageSizeOptions: ["10", "20", "50", totalCount],
             onShowSizeChange: (current, size) => {
-              console.log(`Size changed to ${size}`);
               setPageSize(size);
               fetchPaymentData(current, size);
             },

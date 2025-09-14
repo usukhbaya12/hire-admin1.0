@@ -147,8 +147,6 @@ const Results = () => {
     }
   };
 
-  console.log(examData);
-
   const exportToExcel = () => {
     if (examData.length === 0) {
       messageApi.warning("Экспортлох өгөгдөл олдсонгүй");

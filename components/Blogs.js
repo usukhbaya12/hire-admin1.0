@@ -205,8 +205,6 @@ const Blogs = () => {
       });
   };
 
-  console.log(blogs);
-
   const columns = [
     {
       title: "Зураг",

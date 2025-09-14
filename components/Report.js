@@ -211,8 +211,6 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
         const formData = new FormData();
         formData.append("files", info.file.originFileObj);
 
-        console.log("Uploading file:", info.file.originFileObj.name);
-
         const res = await imageUploader(formData);
 
         if (res === false) {
@@ -326,6 +324,12 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     { label: "Burnout", value: 110 },
     { label: "Үндсэн 5", value: 120 },
     { label: "Үл ойлголцол", value: 130 },
+    { label: "WHOQOL", value: 140 },
+    { label: "HADS", value: 150 },
+    { label: "Архаг ядаргаа", value: 160 },
+    { label: "Тархины ҮА", value: 170 },
+    { label: "Мэдээллийн суурь", value: 180 },
+    { label: "Оффисын улс төр", value: 190 },
   ];
 
   const handleReportTypeChange = (value) => {
