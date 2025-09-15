@@ -168,7 +168,7 @@ const Results = () => {
         Байгууллага: record.buyer?.organizationName || "-",
         Төлөв: record.userEndDate ? "Дууссан" : "Дуусаагүй",
 
-        "Үр дүн": record.result?.result ? record.result.result : "",
+        "Үр дүн": record.result.result ? record.result.result : "",
         Тайлбар: record.result
           ? record.assessment.report === 10
             ? `${(
@@ -337,8 +337,7 @@ const Results = () => {
         if (!record.result) return "-";
 
         if (record.assessment.report === 10) {
-          const score =
-            typeof record.result.point === "number" ? record.result.point : 0;
+          const score = record.result.point ? record.result.point : 0;
           const totalPoints = record.result.total || 1;
           const percent = ((score / totalPoints) * 100).toFixed(1);
 
