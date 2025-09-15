@@ -326,8 +326,8 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     { label: "Үл ойлголцол", value: 130 },
     { label: "WHOQOL", value: 140 },
     { label: "HADS", value: 150 },
-    { label: "Архаг ядаргаа", value: 160 },
-    { label: "Тархины ҮА", value: 170 },
+    { label: "CFS", value: 160 },
+    { label: "BOS", value: 170 },
     { label: "Мэдээллийн суурь", value: 180 },
     { label: "Оффисын улс төр", value: 190 },
   ];
