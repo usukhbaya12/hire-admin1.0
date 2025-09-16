@@ -91,7 +91,14 @@ export const getDefaultAnswers = (type, count = 4) => {
       },
     }),
     [QUESTION_TYPES.TEXT]: () => [],
-    [QUESTION_TYPES.SLIDERSINGLE]: () => [],
+    [QUESTION_TYPES.SLIDERSINGLE]: (i) => ({
+      answer: {
+        value: ``,
+        orderNumber: i,
+        category: null,
+        point: 0,
+      },
+    }),
     [QUESTION_TYPES.SLIDER]: (i) => ({
       answer: {
         value: `Сонголт ${i + 1}`,

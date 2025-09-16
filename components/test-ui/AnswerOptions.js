@@ -209,7 +209,7 @@ const AnswerOptions = ({
         })),
         expandIcon: <DropdownIcon width={15} rotate={-90} />,
       },
-      ...(question.type === 70
+      ...(question.type === 70 || question.type === 80
         ? [
             {
               key: "reverse",

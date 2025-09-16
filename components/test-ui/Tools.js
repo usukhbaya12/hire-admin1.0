@@ -122,7 +122,7 @@ const QuestionSettings = ({ question, onUpdate }) => {
                     ? 2
                     : question.answers?.length
                 }
-                max={100}
+                max={question.type === QUESTION_TYPES.SLIDERSINGLE ? 1 : 100}
                 value={question.answers?.length || 4}
                 onChange={handleOptionCountChange}
               />
@@ -169,7 +169,7 @@ const QuestionSettings = ({ question, onUpdate }) => {
         <ConstantSumSettings question={question} onUpdate={onUpdate} />
       )}
 
-      {[10, 20, 70].includes(question.type) && (
+      {[10, 20, 70, 80].includes(question.type) && (
         <>
           {renderOptionCountSetting()}
           <Divider className="clps" />
