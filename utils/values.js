@@ -115,4 +115,5 @@ export const questionTypes = [
   { value: QUESTION_TYPES.MATRIX, label: "Матриц" },
   { value: QUESTION_TYPES.CONSTANT_SUM, label: "Оноо байршуулах" },
   { value: QUESTION_TYPES.SLIDER, label: "Слайдер" },
+  { value: QUESTION_TYPES.SLIDERSINGLE, label: "Сингл слайдер" },
 ];
