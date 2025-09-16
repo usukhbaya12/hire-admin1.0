@@ -425,6 +425,66 @@ const AnswerOptions = ({
     );
   };
 
+  const renderSliderSingle = () => {
+    const min = Number(question.question?.minValue) || 0;
+    const max = Number(question.question?.maxValue) || 5;
+
+    const getMarks = () => {
+      if (!question.question?.slider) {
+        return Array.from({ length: max - min + 1 }, (_, i) => i + min).reduce(
+          (acc, num) => ({ ...acc, [Number(num)]: String(num) }),
+          {}
+        );
+      }
+
+      const labels = question.question.slider.split(",").map((s) => s.trim());
+      return labels.reduce(
+        (acc, label, idx) => ({
+          ...acc,
+          [Number(min + idx)]: label,
+        }),
+        {}
+      );
+    };
+
+    return (
+      <div className="w-full">
+        {question.answers.map((option, index) => (
+          <div key={index} className="flex items-center gap-2 group">
+            <div className="flex-1">
+              <AnswerContent
+                option={option}
+                index={index}
+                editingOptionIndex={editingOptionIndex}
+                setEditingOptionIndex={setEditingOptionIndex}
+                handleOptionChange={handleOptionChange}
+                handleOptionBlur={handleOptionBlur}
+                handleRemoveCategory={handleRemoveCategory}
+                handleCancelReverse={handleCancelReverse}
+                getOptionMenu={getOptionMenu}
+                question={question}
+                customControl={
+                  <Slider
+                    disabled
+                    min={min}
+                    max={max}
+                    step={1}
+                    value={Number(option.answer.point) || min}
+                    onChange={(value) =>
+                      handleOptionChange(index, { point: Number(value) })
+                    }
+                    marks={getMarks()}
+                    className="w-96"
+                  />
+                }
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderMap = {
     10: renderSingleOrMultipleChoice,
     20: renderSingleOrMultipleChoice,
@@ -432,6 +492,7 @@ const AnswerOptions = ({
     30: renderTrueFalse,
     60: renderTextInput,
     70: renderSlider,
+    80: renderSliderSingle,
   };
 
   return (

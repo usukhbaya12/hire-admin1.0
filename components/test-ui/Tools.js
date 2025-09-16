@@ -116,7 +116,11 @@ const QuestionSettings = ({ question, onUpdate }) => {
             <div className="flex items-center gap-2">
               <InputNumber
                 min={
-                  typeof question.id === "string" ? 2 : question.answers?.length
+                  question.type === QUESTION_TYPES.SLIDERSINGLE
+                    ? 1
+                    : typeof question.id === "string"
+                    ? 2
+                    : question.answers?.length
                 }
                 max={100}
                 value={question.answers?.length || 4}
@@ -172,7 +176,8 @@ const QuestionSettings = ({ question, onUpdate }) => {
         </>
       )}
 
-      {question.type === QUESTION_TYPES.SLIDER && (
+      {(question.type === QUESTION_TYPES.SLIDER ||
+        question.type === QUESTION_TYPES.SLIDERSINGLE) && (
         <>
           <div className="font-bold px-8">Слайдерын тохиргоо</div>
           <Divider />

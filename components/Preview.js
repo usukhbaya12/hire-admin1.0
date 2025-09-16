@@ -659,6 +659,53 @@ const Preview = ({ assessmentData, blocks }) => {
             ))}
           </div>
         );
+
+      case QUESTION_TYPES.SLIDERSINGLE:
+        if (question.question?.slider) {
+          const labels = question.question.slider
+            .split(",")
+            .map((s) => s.trim());
+
+          labels.forEach((label, idx) => {
+            marks[min + idx] = label;
+          });
+        } else {
+          for (let i = min; i <= max; i++) {
+            marks[i] = i.toString();
+          }
+        }
+
+        return (
+          <div className="space-y-4 pl-3.5!">
+            {question.answers.map((answer, index) => (
+              <>
+                <div
+                  key={index}
+                  className="flex flex-col md:flex-row items-center gap-2 md:gap-4 md:justify-between"
+                >
+                  <div className="flex pr-5">
+                    <Slider
+                      min={internalMin}
+                      max={max}
+                      value={answers[question.id]?.[index] ?? internalMin}
+                      onChange={(value) => {
+                        const newAnswer = {
+                          ...(answers[question.id] || {}),
+                          [index]: value,
+                        };
+                        handleAnswer(question.id, newAnswer);
+                      }}
+                      marks={marks}
+                      disabled={false}
+                      className="w-full custom-slider"
+                    />
+                  </div>
+                </div>
+                <Divider />
+              </>
+            ))}
+          </div>
+        );
       default:
         return null;
     }

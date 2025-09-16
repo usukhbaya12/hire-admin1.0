@@ -13,6 +13,7 @@ export const QUESTION_TYPES = {
   CONSTANT_SUM: 50,
   TEXT: 60,
   SLIDER: 70,
+  SLIDERSINGLE: 80,
 };
 
 export const customLocale = {
@@ -90,6 +91,7 @@ export const getDefaultAnswers = (type, count = 4) => {
       },
     }),
     [QUESTION_TYPES.TEXT]: () => [],
+    [QUESTION_TYPES.SLIDERSINGLE]: () => [],
     [QUESTION_TYPES.SLIDER]: (i) => ({
       answer: {
         value: `Сонголт ${i + 1}`,
