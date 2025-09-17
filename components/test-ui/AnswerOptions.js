@@ -97,6 +97,8 @@ const AnswerOptions = ({
 
     input.click();
   };
+
+  console.log(question.answers);
   const handleOptionChange = (index, changes) => {
     const newOptions = [...question.answers];
     newOptions[index].answer = {
@@ -449,7 +451,7 @@ const AnswerOptions = ({
 
     return (
       <div className="w-full">
-        {question.answers.map((option, index) => (
+        {question.answers?.slice(0, 1).map((option, index) => (
           <div key={index} className="flex items-center gap-2 group">
             <div className="flex-1">
               <AnswerContent
@@ -563,7 +565,9 @@ const AnswerContent = ({
             </div>
           ) : (
             <div className="flex items-center w-full">
-              {editingOptionIndex === index ? (
+              {question.type === 80 ? (
+                <></>
+              ) : editingOptionIndex === index ? (
                 <input
                   value={option.answer?.value || ""}
                   onChange={(e) =>

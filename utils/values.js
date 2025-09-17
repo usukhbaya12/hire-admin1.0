@@ -43,6 +43,9 @@ export const customLocale = {
 };
 
 export const getDefaultAnswers = (type, count = 4) => {
+  if (type === QUESTION_TYPES.TRUE_FALSE) count = 2;
+  if (type === QUESTION_TYPES.SLIDERSINGLE) count = 1;
+
   const templates = {
     [QUESTION_TYPES.SINGLE]: (i) => ({
       answer: {
