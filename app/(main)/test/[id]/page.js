@@ -142,9 +142,10 @@ export default function Test() {
                                 point: answer.point !== null ? answer.point : 0,
                                 orderNumber: answer.orderNumber,
                                 category: answer.category,
-                                ...(question.type === 70 && {
-                                  reverse: answer.reverse || false,
-                                }),
+                                ...(question.type === 70 ||
+                                  (question.type === 80 && {
+                                    reverse: answer.reverse || false,
+                                  })),
                                 correct: answer.correct || false,
                                 file: answer.file || null,
                               },
@@ -249,9 +250,10 @@ export default function Test() {
           value: answerObj.answer.value,
           point: answerObj.answer.point || 0,
           file: answerObj.answer.file,
-          ...(question.type === 70 && {
-            reverse: answerObj.answer.reverse || false,
-          }),
+          ...(question.type === 70 ||
+            (question.type === 80 && {
+              reverse: answerObj.answer.reverse || false,
+            })),
           orderNumber: answerObj.answer.orderNumber,
           category:
             answerObj.answer.category?.id ?? answerObj.answer.category ?? null,
