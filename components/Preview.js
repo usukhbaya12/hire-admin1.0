@@ -636,7 +636,7 @@ const Preview = ({ assessmentData, blocks }) => {
                   className="flex flex-col md:flex-row items-center gap-2 md:gap-4 md:justify-between"
                 >
                   <div className="md:w-1/4 w-full">{answer.answer.value}</div>
-                  <div className="flex pr-5">
+                  <div className="flex pl-2 sm:pl-0 pr-5">
                     <Slider
                       min={internalMin}
                       max={max}
@@ -656,6 +656,55 @@ const Preview = ({ assessmentData, blocks }) => {
                 </div>
                 <Divider />
               </>
+            ))}
+          </div>
+        );
+
+      case QUESTION_TYPES.SLIDERSINGLE:
+        const minSingle = parseInt(question.question?.minValue) || 1;
+        const maxSingle = parseInt(question.question?.maxValue) || 5;
+        const internalMinSingle = minSingle - 1;
+        const marksSingle = {};
+
+        if (question.question?.slider) {
+          const labels = question.question.slider
+            .split(",")
+            .map((s) => s.trim());
+
+          labels.forEach((label, idx) => {
+            marksSingle[minSingle + idx] = label;
+          });
+        } else {
+          for (let i = minSingle; i <= maxSingle; i++) {
+            marksSingle[i] = i.toString();
+          }
+        }
+
+        return (
+          <div className="space-y-4 pl-3.5!">
+            {question.answers.map((answer, index) => (
+              <React.Fragment key={index}>
+                <div className="flex flex-col md:flex-row items-center gap-2 md:gap-4 md:justify-between">
+                  <div className="flex pl-6 pr-5 w-full">
+                    <Slider
+                      min={internalMinSingle}
+                      max={maxSingle}
+                      value={answers[question.id]?.[index] ?? internalMinSingle}
+                      onChange={(value) => {
+                        const newAnswer = {
+                          ...(answers[question.id] || {}),
+                          [index]: value,
+                        };
+                        handleAnswer(question.id, newAnswer);
+                      }}
+                      marks={marksSingle}
+                      disabled={false}
+                      className="w-full custom-slider"
+                    />
+                  </div>
+                </div>
+                <Divider />
+              </React.Fragment>
             ))}
           </div>
         );

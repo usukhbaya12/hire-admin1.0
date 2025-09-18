@@ -17,6 +17,7 @@ import { api } from "@/utils/routes";
 import { imageUploader } from "@/app/api/constant";
 import {
   GalleryCircleBoldDuotone,
+  MinusSquareBoldDuotone,
   Pen2BoldDuotone,
   SortHorizontalBoldDuotone,
   TagLineDuotone,
@@ -97,6 +98,8 @@ const AnswerOptions = ({
 
     input.click();
   };
+
+  console.log(question.answers);
   const handleOptionChange = (index, changes) => {
     const newOptions = [...question.answers];
     newOptions[index].answer = {
@@ -136,6 +139,12 @@ const AnswerOptions = ({
   const handleCancelReverse = (index) => {
     const newOptions = [...question.answers];
     newOptions[index].answer.reverse = false;
+    onUpdate({ answers: newOptions });
+  };
+
+  const handleCancelNegative = (index) => {
+    const newOptions = [...question.answers];
+    newOptions[index].answer.negative = false;
     onUpdate({ answers: newOptions });
   };
 
@@ -209,7 +218,7 @@ const AnswerOptions = ({
         })),
         expandIcon: <DropdownIcon width={15} rotate={-90} />,
       },
-      ...(question.type === 70
+      ...(question.type === 70 || question.type === 80
         ? [
             {
               key: "reverse",
@@ -226,6 +235,25 @@ const AnswerOptions = ({
                 newAnswers[index].answer = {
                   ...newAnswers[index].answer,
                   reverse: !newAnswers[index].answer?.reverse,
+                };
+                onUpdate({ answers: newAnswers });
+              },
+            },
+            {
+              key: "negative",
+              label: (
+                <div className="pl-1">
+                  {question.answers[index].answer?.negative
+                    ? "Хасах утгыг цуцлах"
+                    : "Хасах утга"}
+                </div>
+              ),
+              icon: <MinusSquareBoldDuotone width={16} />,
+              onClick: () => {
+                const newAnswers = [...question.answers];
+                newAnswers[index].answer = {
+                  ...newAnswers[index].answer,
+                  negative: !newAnswers[index].answer?.negative,
                 };
                 onUpdate({ answers: newAnswers });
               },
@@ -265,6 +293,7 @@ const AnswerOptions = ({
               removeOptionImage={removeOptionImage}
               handleRemoveCategory={handleRemoveCategory}
               handleCancelReverse={handleCancelReverse}
+              handleCancelNegative={handleCancelNegative}
               getOptionMenu={getOptionMenu}
               question={question}
             />
@@ -288,6 +317,7 @@ const AnswerOptions = ({
               handleOptionBlur={handleOptionBlur}
               handleRemoveCategory={handleRemoveCategory}
               handleCancelReverse={handleCancelReverse}
+              handleCancelNegative={handleCancelNegative}
               getOptionMenu={getOptionMenu}
               isConstantSum
               question={question}
@@ -401,6 +431,7 @@ const AnswerOptions = ({
                 handleOptionBlur={handleOptionBlur}
                 handleRemoveCategory={handleRemoveCategory}
                 handleCancelReverse={handleCancelReverse}
+                handleCancelNegative={handleCancelNegative}
                 getOptionMenu={getOptionMenu}
                 question={question}
                 customControl={
@@ -425,6 +456,67 @@ const AnswerOptions = ({
     );
   };
 
+  const renderSliderSingle = () => {
+    const min = Number(question.question?.minValue) || 0;
+    const max = Number(question.question?.maxValue) || 5;
+
+    const getMarks = () => {
+      if (!question.question?.slider) {
+        return Array.from({ length: max - min + 1 }, (_, i) => i + min).reduce(
+          (acc, num) => ({ ...acc, [Number(num)]: String(num) }),
+          {}
+        );
+      }
+
+      const labels = question.question.slider.split(",").map((s) => s.trim());
+      return labels.reduce(
+        (acc, label, idx) => ({
+          ...acc,
+          [Number(min + idx)]: label,
+        }),
+        {}
+      );
+    };
+
+    return (
+      <div className="w-full">
+        {question.answers?.slice(0, 1).map((option, index) => (
+          <div key={index} className="flex items-center gap-2 group">
+            <div className="flex-1">
+              <AnswerContent
+                option={option}
+                index={index}
+                editingOptionIndex={editingOptionIndex}
+                setEditingOptionIndex={setEditingOptionIndex}
+                handleOptionChange={handleOptionChange}
+                handleOptionBlur={handleOptionBlur}
+                handleRemoveCategory={handleRemoveCategory}
+                handleCancelReverse={handleCancelReverse}
+                handleCancelNegative={handleCancelNegative}
+                getOptionMenu={getOptionMenu}
+                question={question}
+                customControl={
+                  <Slider
+                    disabled
+                    min={min}
+                    max={max}
+                    step={1}
+                    value={Number(option.answer.point) || min}
+                    onChange={(value) =>
+                      handleOptionChange(index, { point: Number(value) })
+                    }
+                    marks={getMarks()}
+                    className="w-96"
+                  />
+                }
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderMap = {
     10: renderSingleOrMultipleChoice,
     20: renderSingleOrMultipleChoice,
@@ -432,6 +524,7 @@ const AnswerOptions = ({
     30: renderTrueFalse,
     60: renderTextInput,
     70: renderSlider,
+    80: renderSliderSingle,
   };
 
   return (
@@ -475,6 +568,7 @@ const AnswerContent = ({
   removeOptionImage,
   handleRemoveCategory,
   handleCancelReverse,
+  handleCancelNegative,
   getOptionMenu,
   isConstantSum = false,
   question,
@@ -502,7 +596,9 @@ const AnswerContent = ({
             </div>
           ) : (
             <div className="flex items-center w-full">
-              {editingOptionIndex === index ? (
+              {question.type === 80 ? (
+                <></>
+              ) : editingOptionIndex === index ? (
                 <input
                   value={option.answer?.value || ""}
                   onChange={(e) =>
@@ -547,6 +643,18 @@ const AnswerContent = ({
                 className="text-green-800"
               />
               Урвуу
+            </div>
+          </Tooltip>
+        )}
+
+        {option.answer?.negative && (
+          <Tooltip title="Хасах утгыг цуцлах">
+            <div
+              onClick={() => handleCancelNegative(index)}
+              className="bg-red-100 px-2.5 py-0.5 gap-2 rounded-full text-sm font-semibold flex items-center text-red-800 cursor-pointer hover:bg-red-200"
+            >
+              <MinusSquareBoldDuotone width={14} className="text-red-800" />
+              Хасах
             </div>
           </Tooltip>
         )}

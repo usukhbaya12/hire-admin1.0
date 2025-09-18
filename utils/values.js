@@ -13,6 +13,7 @@ export const QUESTION_TYPES = {
   CONSTANT_SUM: 50,
   TEXT: 60,
   SLIDER: 70,
+  SLIDERSINGLE: 80,
 };
 
 export const customLocale = {
@@ -42,6 +43,9 @@ export const customLocale = {
 };
 
 export const getDefaultAnswers = (type, count = 4) => {
+  if (type === QUESTION_TYPES.TRUE_FALSE) count = 2;
+  if (type === QUESTION_TYPES.SLIDERSINGLE) count = 1;
+
   const templates = {
     [QUESTION_TYPES.SINGLE]: (i) => ({
       answer: {
@@ -90,6 +94,14 @@ export const getDefaultAnswers = (type, count = 4) => {
       },
     }),
     [QUESTION_TYPES.TEXT]: () => [],
+    [QUESTION_TYPES.SLIDERSINGLE]: (i) => ({
+      answer: {
+        value: ``,
+        orderNumber: i,
+        category: null,
+        point: 0,
+      },
+    }),
     [QUESTION_TYPES.SLIDER]: (i) => ({
       answer: {
         value: `Сонголт ${i + 1}`,
@@ -113,4 +125,5 @@ export const questionTypes = [
   { value: QUESTION_TYPES.MATRIX, label: "Матриц" },
   { value: QUESTION_TYPES.CONSTANT_SUM, label: "Оноо байршуулах" },
   { value: QUESTION_TYPES.SLIDER, label: "Слайдер" },
+  { value: QUESTION_TYPES.SLIDERSINGLE, label: "Сингл слайдер" },
 ];
