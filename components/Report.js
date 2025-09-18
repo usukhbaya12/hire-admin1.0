@@ -42,7 +42,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
   const [filters, setFilters] = useState([{ field: "correct", value: true }]);
   const [limitEnabled, setLimitEnabled] = useState(false);
   const [limitValue, setLimitValue] = useState(2);
-  const [groupByEnabled, setGroupByEnabled] = useState(false);
+  const [groupByEnabled, setGroupByEnabled] = useState([]);
   const [orderEnabled, setOrderEnabled] = useState(false);
   const [orderValue, setOrderValue] = useState("point");
   const [sortEnabled, setSortEnabled] = useState(false);
@@ -98,9 +98,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
             setLimitEnabled(!!response.data.limit);
             if (response.data.limit) setLimitValue(response.data.limit);
 
-            setGroupByEnabled(
-              response.data.groupBy.includes("answerCategoryId")
-            );
+            setGroupByEnabled(response.data.groupBy);
 
             setOrderEnabled(!!response.data.order);
             if (response.data.order) setOrderValue(response.data.order);
@@ -346,7 +344,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
       name: assessmentData?.data?.name,
       formula: "string",
       variables: [],
-      groupBy: groupByEnabled ? ["answerCategoryId"] : [],
+      groupBy: groupByEnabled,
       aggregations: aggregations.map((agg) => ({
         field: agg.field,
         operation: agg.operation?.toUpperCase(),
@@ -361,7 +359,6 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
       sort: sortEnabled ? sortValue === "true" : false,
       ...(orderEnabled && { order: orderValue }),
     };
-
     setLoading(true);
     try {
       const response = await createNewFormula(JSON.stringify(formulaData));
@@ -488,7 +485,8 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
 
               <div className="grid grid-cols-3 gap-6">
                 <div className="space-y-5!">
-                  {assessmentData?.data?.answerCategories?.length > 0 && (
+                  {(assessmentData?.data?.answerCategories?.length > 0 ||
+                    assessmentData?.questionCategories?.length > 0) && (
                     <Card
                       title={
                         <div className="flex items-center gap-2">
@@ -497,14 +495,54 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                         </div>
                       }
                     >
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          size="small"
-                          checked={groupByEnabled}
-                          onChange={setGroupByEnabled}
-                        />
-                        <span>Хариултын ангиллаар нь бүлэглэх</span>
-                      </div>
+                      {assessmentData?.data?.answerCategories?.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            size="small"
+                            checked={groupByEnabled.includes(
+                              "answerCategoryId"
+                            )}
+                            onChange={(checked) => {
+                              setGroupByEnabled((prev) => {
+                                if (checked) {
+                                  return prev.includes("answerCategoryId")
+                                    ? prev
+                                    : [...prev, "answerCategoryId"];
+                                } else {
+                                  return prev.filter(
+                                    (g) => g !== "answerCategoryId"
+                                  );
+                                }
+                              });
+                            }}
+                          />
+                          <span>Хариултын ангиллаар нь бүлэглэх</span>
+                        </div>
+                      )}
+                      {assessmentData?.questionCategories?.length > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            size="small"
+                            checked={groupByEnabled.includes(
+                              "questionCategoryId"
+                            )}
+                            onChange={(checked) => {
+                              setGroupByEnabled((prev) => {
+                                if (checked) {
+                                  return prev.includes("questionCategoryId")
+                                    ? prev
+                                    : [...prev, "questionCategoryId"];
+                                } else {
+                                  return prev.filter(
+                                    (g) => g !== "questionCategoryId"
+                                  );
+                                }
+                              });
+                            }}
+                          />
+                          <span>Асуултын ангиллаар нь бүлэглэх</span>
+                        </div>
+                      )}
                     </Card>
                   )}
                   <Card
