@@ -144,7 +144,8 @@ export default function Test() {
                                 category: answer.category,
                                 ...((question.type === 70 ||
                                   question.type === 80) && {
-                                  reverse: answer.reverse || false,
+                                  reverse: answer.reverse ?? false,
+                                  negative: answer.negative ?? false,
                                 }),
                                 correct: answer.correct || false,
                                 file: answer.file || null,
@@ -251,7 +252,8 @@ export default function Test() {
           point: answerObj.answer.point || 0,
           file: answerObj.answer.file,
           ...((question.type === 70 || question.type === 80) && {
-            reverse: answerObj.answer.reverse || false,
+            reverse: answerObj.answer.reverse ?? false,
+            negative: answerObj.answer.negative ?? false,
           }),
           orderNumber: answerObj.answer.orderNumber,
           category:

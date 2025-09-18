@@ -17,6 +17,7 @@ import { api } from "@/utils/routes";
 import { imageUploader } from "@/app/api/constant";
 import {
   GalleryCircleBoldDuotone,
+  MinusSquareBoldDuotone,
   Pen2BoldDuotone,
   SortHorizontalBoldDuotone,
   TagLineDuotone,
@@ -141,6 +142,12 @@ const AnswerOptions = ({
     onUpdate({ answers: newOptions });
   };
 
+  const handleCancelNegative = (index) => {
+    const newOptions = [...question.answers];
+    newOptions[index].answer.negative = false;
+    onUpdate({ answers: newOptions });
+  };
+
   const handleCorrectAnswerChange = (index, checked) => {
     const newOptions = [...question.answers];
     if (question.type === 10) {
@@ -232,6 +239,25 @@ const AnswerOptions = ({
                 onUpdate({ answers: newAnswers });
               },
             },
+            {
+              key: "negative",
+              label: (
+                <div className="pl-1">
+                  {question.answers[index].answer?.negative
+                    ? "Хасах утгыг цуцлах"
+                    : "Хасах утга"}
+                </div>
+              ),
+              icon: <MinusSquareBoldDuotone width={16} />,
+              onClick: () => {
+                const newAnswers = [...question.answers];
+                newAnswers[index].answer = {
+                  ...newAnswers[index].answer,
+                  negative: !newAnswers[index].answer?.negative,
+                };
+                onUpdate({ answers: newAnswers });
+              },
+            },
           ]
         : []),
       {
@@ -267,6 +293,7 @@ const AnswerOptions = ({
               removeOptionImage={removeOptionImage}
               handleRemoveCategory={handleRemoveCategory}
               handleCancelReverse={handleCancelReverse}
+              handleCancelNegative={handleCancelNegative}
               getOptionMenu={getOptionMenu}
               question={question}
             />
@@ -290,6 +317,7 @@ const AnswerOptions = ({
               handleOptionBlur={handleOptionBlur}
               handleRemoveCategory={handleRemoveCategory}
               handleCancelReverse={handleCancelReverse}
+              handleCancelNegative={handleCancelNegative}
               getOptionMenu={getOptionMenu}
               isConstantSum
               question={question}
@@ -403,6 +431,7 @@ const AnswerOptions = ({
                 handleOptionBlur={handleOptionBlur}
                 handleRemoveCategory={handleRemoveCategory}
                 handleCancelReverse={handleCancelReverse}
+                handleCancelNegative={handleCancelNegative}
                 getOptionMenu={getOptionMenu}
                 question={question}
                 customControl={
@@ -463,6 +492,7 @@ const AnswerOptions = ({
                 handleOptionBlur={handleOptionBlur}
                 handleRemoveCategory={handleRemoveCategory}
                 handleCancelReverse={handleCancelReverse}
+                handleCancelNegative={handleCancelNegative}
                 getOptionMenu={getOptionMenu}
                 question={question}
                 customControl={
@@ -538,6 +568,7 @@ const AnswerContent = ({
   removeOptionImage,
   handleRemoveCategory,
   handleCancelReverse,
+  handleCancelNegative,
   getOptionMenu,
   isConstantSum = false,
   question,
@@ -612,6 +643,18 @@ const AnswerContent = ({
                 className="text-green-800"
               />
               Урвуу
+            </div>
+          </Tooltip>
+        )}
+
+        {option.answer?.negative && (
+          <Tooltip title="Хасах утгыг цуцлах">
+            <div
+              onClick={() => handleCancelNegative(index)}
+              className="bg-red-100 px-2.5 py-0.5 gap-2 rounded-full text-sm font-semibold flex items-center text-red-800 cursor-pointer hover:bg-red-200"
+            >
+              <MinusSquareBoldDuotone width={14} className="text-red-800" />
+              Хасах
             </div>
           </Tooltip>
         )}
