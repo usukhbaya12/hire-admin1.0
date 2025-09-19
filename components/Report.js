@@ -502,6 +502,9 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                             checked={groupByEnabled.includes(
                               "answerCategoryId"
                             )}
+                            disabled={groupByEnabled.includes(
+                              "questionCategoryId"
+                            )}
                             onChange={(checked) => {
                               setGroupByEnabled((prev) => {
                                 if (checked) {
@@ -525,6 +528,9 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                             size="small"
                             checked={groupByEnabled.includes(
                               "questionCategoryId"
+                            )}
+                            disabled={groupByEnabled.includes(
+                              "answerCategoryId"
                             )}
                             onChange={(checked) => {
                               setGroupByEnabled((prev) => {
