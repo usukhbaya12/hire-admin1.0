@@ -170,7 +170,11 @@ const Results = () => {
           ? new Date(record.userEndDate).toLocaleString()
           : "-",
         Байгууллага: record.buyer?.organizationName || "-",
-        Төлөв: record.userEndDate ? "Дууссан" : "Дуусаагүй",
+        Төлөв: record.userEndDate
+          ? "Дууссан"
+          : record.userStartDate && !record.userEndDate
+          ? "Эхэлсэн"
+          : "Өгөөгүй",
 
         "Үр дүн":
           record.assessment.type === 10 || record.assessment.type === 11
@@ -179,7 +183,7 @@ const Results = () => {
               )}%`
             : record.result?.result,
 
-        Тайлбар: record.result?.value ? record.result.value : "-",
+        Тайлбар: record.result?.value ? record.result.value : "",
         ...(record.assessment.type === 10 || record.assessment.type === 11
           ? {
               "Авах оноо": record.result?.total || "-",
@@ -318,24 +322,50 @@ const Results = () => {
       key: "status",
       filters: [
         { text: "Дууссан", value: "finished" },
-        { text: "Дуусаагүй", value: "unfinished" },
+        { text: "Эхэлсэн", value: "unfinished" },
+        { text: "Өгөөгүй", value: "notstarted" },
       ],
       filteredValue: filteredInfo.status || null,
       onFilter: (value, record) => {
-        const hasFinished = !!record.userEndDate;
-        return value === "finished" ? hasFinished : !hasFinished;
+        if (value === "finished") {
+          return !!record.userEndDate;
+        }
+        if (value === "unfinished") {
+          return record.userStartDate && !record.userEndDate;
+        }
+        if (value === "notstarted") {
+          return !record.userStartDate && !record.userEndDate;
+        }
+        return true;
       },
-      render: (_, record) => (
-        <span
-          className={`${
-            record.userEndDate
-              ? "text-center border border-green-600 p-[3px] px-2.5 rounded-xl text-green-700 bg-green-500/40 font-semibold text-[13px]"
-              : "text-center border border-orange-600 p-[3px] px-2.5 rounded-xl text-orange-600 bg-orange-400/40 font-semibold text-[13px]"
-          }`}
-        >
-          {record.userEndDate ? "Дууссан" : "Дуусаагүй"}
-        </span>
-      ),
+      render: (_, record) => {
+        if (record.userEndDate) {
+          return (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-emerald-300 to-green-300 border border-green-500 shadow-sm">
+              <div className="w-2 h-2 bg-emerald-600 rounded-full"></div>
+              <span className="text-sm font-bold text-emerald-700">
+                Дууссан
+              </span>
+            </div>
+          );
+        } else if (record.userStartDate && !record.userEndDate) {
+          return (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-blue-200 to-blue-100 border border-blue-300 shadow-sm">
+              <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-semibold text-blue-700">
+                Эхэлсэн
+              </span>
+            </div>
+          );
+        } else {
+          return (
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200 shadow-sm">
+              <div className="w-2 h-2 bg-amber-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-bold text-amber-700">Өгөөгүй</span>
+            </div>
+          );
+        }
+      },
     },
     {
       title: "Үр дүн",
