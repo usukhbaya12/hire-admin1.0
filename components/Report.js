@@ -326,8 +326,10 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     { label: "HADS", value: 150 },
     { label: "CFS", value: 160 },
     { label: "BOS", value: 170 },
-    { label: "Мэдээллийн суурь", value: 180 },
+    { label: "PSI", value: 180 },
     { label: "Оффисын улс төр", value: 190 },
+    { label: "Ёс зүй", value: 200 },
+    { label: "Зохисгүй ажлын байр", value: 210 },
   ];
 
   const handleReportTypeChange = (value) => {
