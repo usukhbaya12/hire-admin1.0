@@ -28,6 +28,7 @@ import { customLocale } from "@/utils/values";
 import { getReport } from "@/app/api/assessment";
 import { LoadingOutlined } from "@ant-design/icons";
 import { DropdownIcon } from "./Icons";
+import Link from "next/link";
 
 const Results = () => {
   const [messageApi, contextHolder] = message.useMessage();
@@ -158,9 +159,12 @@ const Results = () => {
         "№": index + 1,
         "Шалгуулагчийн нэр": `${record.firstname} ${record.lastname}`,
         "Тестийн нэр": record.assessment.name,
-        "Тестийн төрөл":
-          record.assessment.type === 10 ? "Зөв хариулттай" : "Өөрийн үнэлгээ",
-        "И-мейл хаяг": record.email,
+        "Тестийн төрөл": record.assessment?.type
+          ? record.assessment.type === 10
+            ? "Зөв хариулттай"
+            : "Өөрийн үнэлгээ"
+          : "-",
+        "И-мейл хаяг": record.email ? record.email : "-",
         "Эхэлсэн огноо": new Date(record.userStartDate).toLocaleString(),
         "Дууссан огноо": record.userEndDate
           ? new Date(record.userEndDate).toLocaleString()
@@ -168,18 +172,24 @@ const Results = () => {
         Байгууллага: record.buyer?.organizationName || "-",
         Төлөв: record.userEndDate ? "Дууссан" : "Дуусаагүй",
 
-        "Үр дүн": record.result.result ? record.result.result : "",
-        Тайлбар: record.result
-          ? record.assessment.report === 10
-            ? `${(
-                (record.result.point / record.assessment.total) *
-                100
-              ).toFixed(1)}%`
-            : record.result.value
-          : record.result?.value || "-",
-        "Авсан оноо (зөв хариулттай)": record.result?.point
-          ? record.result.point
-          : "",
+        "Үр дүн":
+          record.assessment.type === 10 || record.assessment.type === 11
+            ? `${((record.result?.point / record.result?.total) * 100).toFixed(
+                1
+              )}%`
+            : record.result?.result,
+
+        Тайлбар: record.result?.value ? record.result.value : "-",
+        ...(record.assessment.type === 10 || record.assessment.type === 11
+          ? {
+              "Авах оноо": record.result?.total || "-",
+            }
+          : {}),
+        ...(record.assessment.type === 10 || record.assessment.type === 11
+          ? {
+              "Авсан оноо": record.result?.point || "-",
+            }
+          : {}),
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -398,15 +408,19 @@ const Results = () => {
       title: "Тайлан",
       key: "action",
       render: (_, record) =>
-        record.userEndDate && (
+        record.userEndDate &&
+        record.result && (
           <Tooltip title="Тайлан татах">
-            <button
-              onClick={() => generatePDF(record.code)}
-              className="cursor-pointer mx-auto text-main hover:text-secondary flex items-center gap-2 font-semibold"
+            <Link
+              href={`https://hire.mn/api/report/${record.code}`}
+              target="_blank"
+              passHref
             >
-              <ClipboardTextBoldDuotone width={18} />
-              Татах
-            </button>
+              <button className="cursor-pointer mx-auto text-main hover:text-secondary flex items-center gap-2 font-semibold">
+                <ClipboardTextBoldDuotone width={18} />
+                Татах
+              </button>
+            </Link>
           </Tooltip>
         ),
       align: "center",

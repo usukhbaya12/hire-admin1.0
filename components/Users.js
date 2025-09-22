@@ -61,6 +61,12 @@ const Users = () => {
 
   const userColumns = [
     {
+      title: "№",
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+      width: 60,
+    },
+    {
       title: "Хэрэглэгч",
       key: "user",
       render: (_, record) => (

@@ -63,6 +63,12 @@ const Organizations = () => {
 
   const organizationColumns = [
     {
+      title: "№",
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+      width: 60,
+    },
+    {
       title: "Байгууллагын нэр",
       dataIndex: "organizationName",
       // sorter: true,

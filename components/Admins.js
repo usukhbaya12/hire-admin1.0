@@ -50,6 +50,12 @@ const Admins = () => {
 
   const adminColumns = [
     {
+      title: "№",
+      render: (_, __, index) =>
+        (pagination.current - 1) * pagination.pageSize + index + 1,
+      width: 60,
+    },
+    {
       title: "Админ",
       key: "admin",
       render: (_, record) => (
