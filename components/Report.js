@@ -608,62 +608,66 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                       )}
                     </div>
                   </Card>
-
-                  <Card
-                    title={
-                      <div className="flex items-center gap-2">
-                        <FilterBoldDuotone width={17} />
-                        <span>Филтер</span>
+                  {assessmentData?.data?.type === 10 && (
+                    <Card
+                      title={
+                        <div className="flex items-center gap-2">
+                          <FilterBoldDuotone width={17} />
+                          <span>Филтер</span>
+                        </div>
+                      }
+                    >
+                      <div className="space-y-4">
+                        {filters.length > 0 ? (
+                          filters.map((filter, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-4"
+                            >
+                              <Select
+                                suffixIcon={
+                                  <DropdownIcon width={15} height={15} />
+                                }
+                                placeholder="Филтер"
+                                value={filter.field}
+                                onChange={(value) =>
+                                  handleFilterFieldChange(value, index)
+                                }
+                                className="w-full"
+                                options={filterFieldOptions}
+                              />
+                              <Select
+                                suffixIcon={
+                                  <DropdownIcon width={15} height={15} />
+                                }
+                                placeholder="Утга"
+                                value={filter.value}
+                                onChange={(value) =>
+                                  handleFilterValueChange(value, index)
+                                }
+                                className="w-full"
+                                options={filterValueOptions}
+                              />
+                              <Button
+                                type="text"
+                                onClick={removeFilter}
+                                icon={<TrashBin2BoldDuotone width={18} />}
+                                className="text-red-500! rounded-full! px-2! mt-1!"
+                              />
+                            </div>
+                          ))
+                        ) : (
+                          <Button
+                            onClick={addFilter}
+                            icon={<PlusIcon width={16} color="#000" />}
+                            className="back-btn w-full"
+                          >
+                            Филтер нэмэх
+                          </Button>
+                        )}
                       </div>
-                    }
-                  >
-                    <div className="space-y-4">
-                      {filters.length > 0 ? (
-                        filters.map((filter, index) => (
-                          <div key={index} className="flex items-center gap-4">
-                            <Select
-                              suffixIcon={
-                                <DropdownIcon width={15} height={15} />
-                              }
-                              placeholder="Филтер"
-                              value={filter.field}
-                              onChange={(value) =>
-                                handleFilterFieldChange(value, index)
-                              }
-                              className="w-full"
-                              options={filterFieldOptions}
-                            />
-                            <Select
-                              suffixIcon={
-                                <DropdownIcon width={15} height={15} />
-                              }
-                              placeholder="Утга"
-                              value={filter.value}
-                              onChange={(value) =>
-                                handleFilterValueChange(value, index)
-                              }
-                              className="w-full"
-                              options={filterValueOptions}
-                            />
-                            <Button
-                              type="text"
-                              onClick={removeFilter}
-                              icon={<TrashBin2BoldDuotone width={18} />}
-                              className="text-red-500! rounded-full! px-2! mt-1!"
-                            />
-                          </div>
-                        ))
-                      ) : (
-                        <Button
-                          onClick={addFilter}
-                          icon={<PlusIcon width={16} color="#000" />}
-                          className="back-btn w-full"
-                        >
-                          Филтер нэмэх
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
+                    </Card>
+                  )}
                 </div>
 
                 <div className="space-y-5!">
