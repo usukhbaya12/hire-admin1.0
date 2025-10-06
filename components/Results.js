@@ -441,11 +441,7 @@ const Results = () => {
         record.userEndDate &&
         record.result && (
           <Tooltip title="Тайлан татах">
-            <Link
-              href={`https://hire.mn/api/report/${record.code}`}
-              target="_blank"
-              passHref
-            >
+            <Link href={`/api/report/${record.code}`} target="_blank" passHref>
               <button className="cursor-pointer mx-auto text-main hover:text-secondary flex items-center gap-2 font-semibold">
                 <ClipboardTextBoldDuotone width={18} />
                 Татах

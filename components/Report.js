@@ -447,8 +447,16 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
             selected === "example" ? "bg-gray-100" : ""
           }`}
         >
-          <div className="font-bold">Жишиг тайлан</div>
-          <div className="text-[13px] pb-0.5">Жишиг тайлан оруулах</div>
+          <div className="font-bold">
+            {assessmentData.data?.type === 10
+              ? "Онооны тайлбар"
+              : "Жишиг тайлан"}
+          </div>
+          <div className="text-[13px] pb-0.5">
+            {assessmentData.data?.type === 10
+              ? "Онооны тайлбар оруулах"
+              : "Жишиг тайлан оруулах"}
+          </div>
         </div>
       </div>
 
@@ -803,8 +811,16 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                   } font-bold`}
                 >
                   {hasReport
-                    ? "Жишиг тайлан оруулсан байна."
-                    : "Жишиг тайлан оруулаагүй байна."}
+                    ? `${
+                        assessmentData.data?.type === 10
+                          ? "Онооны тайлбар"
+                          : "Жишиг тайлан"
+                      } оруулсан байна.`
+                    : `${
+                        assessmentData.data?.type === 10
+                          ? "Онооны тайлбар"
+                          : "Жишиг тайлан"
+                      } оруулаагүй байна.`}
                 </div>
                 <div className="mt-4 w-1/2">
                   <Dragger
@@ -825,7 +841,13 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                       <InboxOutlined />
                     </p>
                     <p className="font-semibold">
-                      {uploading ? "Уншиж байна..." : "Жишиг тайлан оруулах"}
+                      {uploading
+                        ? "Уншиж байна..."
+                        : `${
+                            assessmentData.data?.type === 10
+                              ? "Онооны тайлбар"
+                              : "Жишиг тайлан"
+                          } оруулах`}
                     </p>
                     <p className="ant-upload-hint text-sm leading-4 mt-2">
                       Зөвхөн PDF өргөтгөлтэй файлыг энд дарж эсвэл чирж оруулна

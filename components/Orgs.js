@@ -84,6 +84,7 @@ const Organizations = () => {
           </div>
           <div className="leading-4">
             <div className="font-bold text-blue-600">{text}</div>
+            <div className="text-gray-700 text-sm">{record.email}</div>
           </div>
         </div>
       ),
@@ -102,14 +103,9 @@ const Organizations = () => {
           <div className="font-semibold">
             {record.lastname[0]}.{text}
           </div>
-          <div className="text-gray-700 text-sm">{record.email}</div>
+          <div className="text-gray-700 text-sm">{record.phone}</div>
         </div>
       ),
-    },
-    {
-      title: "Утасны дугаар",
-      dataIndex: "organizationPhone",
-      align: "center",
     },
     {
       title: "Бүртгүүлсэн огноо",
@@ -167,6 +163,8 @@ const Organizations = () => {
           params.orgName = debouncedSearch;
         } else if (searchType === "register") {
           params.orgRegister = debouncedSearch;
+        } else if (searchType === "email") {
+          params.email = debouncedSearch;
         }
       }
 
@@ -250,6 +248,7 @@ const Organizations = () => {
                 options={[
                   { value: "name", label: "Нэрээр" },
                   { value: "register", label: "Регистрээр" },
+                  { value: "email", label: "И-мэйлээр" },
                 ]}
               />
               <Input
