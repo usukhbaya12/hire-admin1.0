@@ -39,7 +39,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
   const [aggregations, setAggregations] = useState([
     { field: "point", operation: "sum" },
   ]);
-  const [filters, setFilters] = useState([{ field: "correct", value: true }]);
+  const [filters, setFilters] = useState([{ field: "correct", value: false }]);
   const [limitEnabled, setLimitEnabled] = useState(false);
   const [limitValue, setLimitValue] = useState(2);
   const [groupByEnabled, setGroupByEnabled] = useState([]);
