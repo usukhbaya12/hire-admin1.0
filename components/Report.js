@@ -39,7 +39,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
   const [aggregations, setAggregations] = useState([
     { field: "point", operation: "sum" },
   ]);
-  const [filters, setFilters] = useState([{ field: "correct", value: false }]);
+  const [filters, setFilters] = useState([{ field: "correct", value: true }]);
   const [limitEnabled, setLimitEnabled] = useState(false);
   const [limitValue, setLimitValue] = useState(2);
   const [groupByEnabled, setGroupByEnabled] = useState([]);
@@ -352,12 +352,15 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
         field: agg.field,
         operation: agg.operation?.toUpperCase(),
       })),
-      filters: filters.reduce((acc, filter) => {
-        if (filter.field && filter.value !== undefined) {
-          acc[filter.field] = filter.value;
-        }
-        return acc;
-      }, {}),
+      filters:
+        assessmentData?.data?.type === 10
+          ? filters.reduce((acc, filter) => {
+              if (filter.field && filter.value !== undefined) {
+                acc[filter.field] = filter.value;
+              }
+              return acc;
+            }, {})
+          : {},
       limit: limitEnabled ? limitValue : null,
       sort: sortEnabled ? sortValue === "true" : false,
       ...(orderEnabled && { order: orderValue }),
