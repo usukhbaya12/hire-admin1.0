@@ -26,9 +26,9 @@ export const authOptions = {
           const res = await response.json();
 
           if (res.succeed) {
-            if (![10, 40, 50].includes(res.payload.user.role)) {
-              throw new Error("Нэвтрэх эрхгүй байна.");
-            }
+            // if (![10, 40, 50].includes(res.payload.user.role)) {
+            //   throw new Error("Нэвтрэх эрхгүй байна.");
+            // }
 
             return {
               email: res.payload.user.email,
