@@ -12,7 +12,7 @@ export async function middleware(request) {
 
   const isAuthenticated = !!token;
   const userRole = token?.role;
-  const allowedRoles = [10, 40, 50];
+  const allowedRoles = [10, 20, 30, 40, 50];
 
   const isAuthPage = pathname === "/auth/signin";
 
