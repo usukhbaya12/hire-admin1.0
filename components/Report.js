@@ -331,6 +331,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     { label: "Ёс зүй", value: 200 },
     { label: "Зохисгүй ажлын байр", value: 210 },
     { label: "Grit", value: 220 },
+    { label: "Work-life balance", value: 230 },
   ];
 
   const handleReportTypeChange = (value) => {
