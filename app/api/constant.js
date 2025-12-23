@@ -35,8 +35,8 @@ export async function imageUploader(images) {
     const token = await getAuthToken();
     let res = await fetch(`${api}upload`, {
       method: "POST",
+      cache: "no-store",
       headers: {
-        cache: "no-store",
         Authorization: `Bearer ${token ?? ""}`,
       },
       body: images,
@@ -610,7 +610,7 @@ export const getEmails = async ({
   type = null,
   startDate = null,
   endDate = null,
-  email = null
+  email = null,
 }) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
