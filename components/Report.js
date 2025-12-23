@@ -330,6 +330,10 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
     { label: "Оффисын улс төр", value: 190 },
     { label: "Ёс зүй", value: 200 },
     { label: "Зохисгүй ажлын байр", value: 210 },
+    { label: "Grit", value: 220 },
+    { label: "Work-life balance", value: 230 },
+    { label: "Сэтгэл түгшилт", value: 240 },
+    { label: "Work stress", value: 250 },
   ];
 
   const handleReportTypeChange = (value) => {
@@ -351,12 +355,15 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
         field: agg.field,
         operation: agg.operation?.toUpperCase(),
       })),
-      filters: filters.reduce((acc, filter) => {
-        if (filter.field && filter.value !== undefined) {
-          acc[filter.field] = filter.value;
-        }
-        return acc;
-      }, {}),
+      filters:
+        assessmentData?.data?.type === 10
+          ? filters.reduce((acc, filter) => {
+              if (filter.field && filter.value !== undefined) {
+                acc[filter.field] = filter.value;
+              }
+              return acc;
+            }, {})
+          : {},
       limit: limitEnabled ? limitValue : null,
       sort: sortEnabled ? sortValue === "true" : false,
       ...(orderEnabled && { order: orderValue }),
@@ -446,8 +453,16 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
             selected === "example" ? "bg-gray-100" : ""
           }`}
         >
-          <div className="font-bold">Жишиг тайлан</div>
-          <div className="text-[13px] pb-0.5">Жишиг тайлан оруулах</div>
+          <div className="font-bold">
+            {assessmentData.data?.type === 10
+              ? "Онооны тайлбар"
+              : "Жишиг тайлан"}
+          </div>
+          <div className="text-[13px] pb-0.5">
+            {assessmentData.data?.type === 10
+              ? "Онооны тайлбар оруулах"
+              : "Жишиг тайлан оруулах"}
+          </div>
         </div>
       </div>
 
@@ -608,62 +623,66 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                       )}
                     </div>
                   </Card>
-
-                  <Card
-                    title={
-                      <div className="flex items-center gap-2">
-                        <FilterBoldDuotone width={17} />
-                        <span>Филтер</span>
+                  {assessmentData?.data?.type === 10 && (
+                    <Card
+                      title={
+                        <div className="flex items-center gap-2">
+                          <FilterBoldDuotone width={17} />
+                          <span>Филтер</span>
+                        </div>
+                      }
+                    >
+                      <div className="space-y-4">
+                        {filters.length > 0 ? (
+                          filters.map((filter, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-4"
+                            >
+                              <Select
+                                suffixIcon={
+                                  <DropdownIcon width={15} height={15} />
+                                }
+                                placeholder="Филтер"
+                                value={filter.field}
+                                onChange={(value) =>
+                                  handleFilterFieldChange(value, index)
+                                }
+                                className="w-full"
+                                options={filterFieldOptions}
+                              />
+                              <Select
+                                suffixIcon={
+                                  <DropdownIcon width={15} height={15} />
+                                }
+                                placeholder="Утга"
+                                value={filter.value}
+                                onChange={(value) =>
+                                  handleFilterValueChange(value, index)
+                                }
+                                className="w-full"
+                                options={filterValueOptions}
+                              />
+                              <Button
+                                type="text"
+                                onClick={removeFilter}
+                                icon={<TrashBin2BoldDuotone width={18} />}
+                                className="text-red-500! rounded-full! px-2! mt-1!"
+                              />
+                            </div>
+                          ))
+                        ) : (
+                          <Button
+                            onClick={addFilter}
+                            icon={<PlusIcon width={16} color="#000" />}
+                            className="back-btn w-full"
+                          >
+                            Филтер нэмэх
+                          </Button>
+                        )}
                       </div>
-                    }
-                  >
-                    <div className="space-y-4">
-                      {filters.length > 0 ? (
-                        filters.map((filter, index) => (
-                          <div key={index} className="flex items-center gap-4">
-                            <Select
-                              suffixIcon={
-                                <DropdownIcon width={15} height={15} />
-                              }
-                              placeholder="Филтер"
-                              value={filter.field}
-                              onChange={(value) =>
-                                handleFilterFieldChange(value, index)
-                              }
-                              className="w-full"
-                              options={filterFieldOptions}
-                            />
-                            <Select
-                              suffixIcon={
-                                <DropdownIcon width={15} height={15} />
-                              }
-                              placeholder="Утга"
-                              value={filter.value}
-                              onChange={(value) =>
-                                handleFilterValueChange(value, index)
-                              }
-                              className="w-full"
-                              options={filterValueOptions}
-                            />
-                            <Button
-                              type="text"
-                              onClick={removeFilter}
-                              icon={<TrashBin2BoldDuotone width={18} />}
-                              className="text-red-500! rounded-full! px-2! mt-1!"
-                            />
-                          </div>
-                        ))
-                      ) : (
-                        <Button
-                          onClick={addFilter}
-                          icon={<PlusIcon width={16} color="#000" />}
-                          className="back-btn w-full"
-                        >
-                          Филтер нэмэх
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
+                    </Card>
+                  )}
                 </div>
 
                 <div className="space-y-5!">
@@ -798,8 +817,16 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                   } font-bold`}
                 >
                   {hasReport
-                    ? "Жишиг тайлан оруулсан байна."
-                    : "Жишиг тайлан оруулаагүй байна."}
+                    ? `${
+                        assessmentData.data?.type === 10
+                          ? "Онооны тайлбар"
+                          : "Жишиг тайлан"
+                      } оруулсан байна.`
+                    : `${
+                        assessmentData.data?.type === 10
+                          ? "Онооны тайлбар"
+                          : "Жишиг тайлан"
+                      } оруулаагүй байна.`}
                 </div>
                 <div className="mt-4 w-1/2">
                   <Dragger
@@ -820,7 +847,13 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                       <InboxOutlined />
                     </p>
                     <p className="font-semibold">
-                      {uploading ? "Уншиж байна..." : "Жишиг тайлан оруулах"}
+                      {uploading
+                        ? "Уншиж байна..."
+                        : `${
+                            assessmentData.data?.type === 10
+                              ? "Онооны тайлбар"
+                              : "Жишиг тайлан"
+                          } оруулах`}
                     </p>
                     <p className="ant-upload-hint text-sm leading-4 mt-2">
                       Зөвхөн PDF өргөтгөлтэй файлыг энд дарж эсвэл чирж оруулна

@@ -62,9 +62,9 @@ const UserDetailModal = ({ user, visible, onClose, onSuccess }) => {
                     {user?.organizationRegisterNumber}
                   </div>
                 </Descriptions.Item>
-                <Descriptions.Item label="Утасны дугаар">
+                {/* <Descriptions.Item label="Утасны дугаар">
                   <div className="font-semibold">{user?.organizationPhone}</div>
-                </Descriptions.Item>
+                </Descriptions.Item> */}
                 <Descriptions.Item label="Дансны үлдэгдэл">
                   {user?.wallet?.toLocaleString()}₮
                 </Descriptions.Item>

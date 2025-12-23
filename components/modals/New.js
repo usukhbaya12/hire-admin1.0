@@ -36,6 +36,7 @@ const NewAssessment = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const testName = Form.useWatch("testName", form);
+  const assessmentType = Form.useWatch("assessmentType", form);
 
   useEffect(() => {
     if (isModalOpen) {
@@ -50,6 +51,14 @@ const NewAssessment = ({
       setIsSubmitting(false);
     }
   }, [isModalOpen, form]);
+
+  useEffect(() => {
+    if (assessmentType === 10) {
+      setCategorySwitchOn(false);
+      setAnswerCategoriesInput("");
+      form.setFieldValue("answerCategoriesInput", undefined);
+    }
+  }, [assessmentType, form]);
 
   const handleEditClick = useCallback(() => setIsEditing(true), []);
   const handleBlur = useCallback(() => setIsEditing(false), []);
@@ -325,6 +334,7 @@ const NewAssessment = ({
             size="small"
             checked={isCategorySwitchOn}
             onChange={handleCategorySwitchChange}
+            disabled={assessmentType === 10}
           />
           <div>Хариулт нь ангилалтай байх уу?</div>
         </div>

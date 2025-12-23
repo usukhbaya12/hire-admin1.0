@@ -155,6 +155,12 @@ const Admins = () => {
           totalCount = response.data.count || response.data.data.length;
         }
 
+        organizationsData = organizationsData.filter(
+          (u) => u.email !== "test@hire.mn"
+        );
+
+        totalCount = organizationsData.length;
+
         setAdmins(organizationsData);
         setPagination((prev) => ({
           ...prev,
