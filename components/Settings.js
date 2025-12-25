@@ -609,7 +609,29 @@ const Settings = ({
               accept="image/*"
               listType="picture"
               maxCount={1}
-              onChange={handleChange}
+              customRequest={async ({ file, onSuccess, onError }) => {
+                setLoading(true);
+                try {
+                  const formData = new FormData();
+                  formData.append("files", file);
+                  const res = await imageUploader(formData);
+
+                  if (res && res[0]) {
+                    setImageUrl(res[0]);
+                    handleFieldChange("icons", res[0]);
+                    onSuccess(res[0]);
+                  } else {
+                    onError(new Error("Upload failed"));
+                    messageApi.error("Зураг хуулахад алдаа гарлаа");
+                  }
+                } catch (error) {
+                  console.error("Upload error:", error);
+                  onError(error);
+                  messageApi.error("Зураг хуулахад алдаа гарлаа");
+                } finally {
+                  setLoading(false);
+                }
+              }}
               defaultFileList={
                 imageUrl
                   ? [
@@ -625,9 +647,10 @@ const Settings = ({
               onRemove={() => {
                 setImageUrl(null);
                 handleFieldChange("icons", null);
+                return true;
               }}
             >
-              {!assessmentData?.data?.icons && (
+              {!imageUrl && (
                 <Button icon={<PlusOutlined />} className="the-btn">
                   Зураг оруулах
                 </Button>
