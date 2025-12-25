@@ -35,8 +35,8 @@ export async function imageUploader(images) {
     const token = await getAuthToken();
     let res = await fetch(`${api}upload`, {
       method: "POST",
+      cache: "no-store",
       headers: {
-        cache: "no-store",
         Authorization: `Bearer ${token ?? ""}`,
       },
       body: images,
@@ -610,6 +610,7 @@ export const getEmails = async ({
   type = null,
   startDate = null,
   endDate = null,
+  email = null,
 }) => {
   const token = await getAuthToken();
   if (!token) return { token: false };
@@ -619,11 +620,11 @@ export const getEmails = async ({
     params.append("page", page);
     params.append("limit", limit);
     if (user) params.append("user", user);
+    if (email) params.append("email", email);
     if (status) params.append("status", status);
     if (type) params.append("type", type);
     if (startDate) params.append("startDate", startDate);
     if (endDate) params.append("endDate", endDate);
-
     const res = await fetch(`${api}email_log/all?${params.toString()}`, {
       method: "GET",
       headers: {
