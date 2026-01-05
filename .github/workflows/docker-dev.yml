@@ -7,7 +7,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: usukhbaya12/hire-admin.git
+  IMAGE_NAME: usukhbaya12/hire-admin
 
 jobs:
   build:
