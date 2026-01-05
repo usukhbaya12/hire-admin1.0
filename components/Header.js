@@ -74,10 +74,29 @@ const Header = () => {
       <header
         className={`sticky top-0 z-50 bg-white border-b border-neutral transition-shadow duration-300`}
       >
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute -translate-y-1/2 rotate-[-30deg] opacity-50 text-gray-400 whitespace-nowrap text-lg font-semibold tracking-widest">
+            {Array.from({ length: 200 }).map((_, i) => (
+              <div key={i} className="mb-12">
+                ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ
+                ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ
+                ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ
+                ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ
+                ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ
+                ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ
+                ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ
+                ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ&nbsp;&nbsp;&nbsp;ТЕСТ
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="px-9 mx-auto py-3 flex items-center justify-between">
           <div className="flex items-center gap-8">
-            <Link href={"/"} className="flex items-center">
+            <Link href={"/"} className="flex items-center gap-2">
               <Image src="/hire-2.png" width={80} height={24} alt="Hire Logo" />
+              <p className="font-black text-xl bg-main text-white px-1.5">
+                ТЕСТ
+              </p>
             </Link>
 
             {/* <nav className="hidden md:flex items-center space-x-1">
