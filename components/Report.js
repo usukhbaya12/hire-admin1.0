@@ -33,7 +33,11 @@ import { InboxOutlined } from "@ant-design/icons";
 import { api } from "@/utils/routes";
 const { Dragger } = Upload;
 
-const Report = ({ assessmentData, onUpdateAssessment }) => {
+const Report = ({
+  assessmentData,
+  onUpdateAssessment,
+  assessmentQuestions,
+}) => {
   const [selected, setSelected] = useState("formula");
   const [form] = Form.useForm();
   const [aggregations, setAggregations] = useState([
@@ -802,6 +806,7 @@ const Report = ({ assessmentData, onUpdateAssessment }) => {
                     limitValue={limitValue}
                     sortEnabled={sortEnabled}
                     sortValue={sortValue}
+                    assessmentQuestions={assessmentQuestions}
                   />
                 </div>
               </div>
