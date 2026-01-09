@@ -1,169 +1,134 @@
 import React, { useMemo } from "react";
 import { Card, Divider } from "antd";
 import { generateDemoData, formatDemoResults } from "./Demo";
+import {
+  ClipboardCheckBoldDuotone,
+  RevoteLineDuotone,
+  SortHorizontalBoldDuotone,
+  TagLineDuotone,
+} from "solar-icons";
+import { MenuIcon } from "./Icons";
 
 const FormulaExample = ({
-  assessmentData,
-  groupByEnabled,
+  demoData,
+  formattedResults,
   aggregations,
-  filters,
   limitEnabled,
   limitValue,
   sortEnabled,
   sortValue,
   assessmentQuestions,
-  orderEnabled,
-  orderValue,
+  resultConfig,
 }) => {
-  const demoData = useMemo(() => {
-    const answerCategories = assessmentData?.data?.answerCategories || [];
-    return generateDemoData(assessmentQuestions, answerCategories);
-  }, [assessmentQuestions, assessmentData?.data?.answerCategories]);
+  // Function to get interval label for a value
+  const getIntervalLabel = (value, intervals) => {
+    if (!intervals || intervals.length === 0) return null;
+    const interval = intervals.find((i) => value >= i.start && value <= i.end);
+    return interval?.label || null;
+  };
 
-  const formattedResults = useMemo(() => {
-    if (!demoData) return null;
-    return formatDemoResults(
-      demoData,
-      groupByEnabled,
-      aggregations,
-      sortEnabled,
-      sortValue,
-      limitEnabled,
-      limitValue,
-      assessmentQuestions
-    );
-  }, [
-    demoData,
-    groupByEnabled,
-    aggregations,
-    sortEnabled,
-    sortValue,
-    limitEnabled,
-    limitValue,
-    assessmentQuestions,
-  ]);
+  // Function to classify value based on group intervals
+  const getGroupIntervalLabel = (value, groupName, groupIntervals) => {
+    if (!groupIntervals || !groupIntervals[groupName]) return null;
+    return getIntervalLabel(value, groupIntervals[groupName]);
+  };
 
   const calculateExample = () => {
-    if (!demoData || !formattedResults) {
-      return <div>Жишээ үүсгэх боломжгүй байна.</div>;
+    if (demoData.byQuestion.length === 0 || !formattedResults) {
+      return (
+        <div>
+          Жишээ үүсгэх боломжгүй байна. Асуулт нэмэх эсвэл хадгалах үйлдэл хийнэ
+          үү.
+        </div>
+      );
     }
-
-    const groupingType = groupByEnabled?.[0] || "none";
 
     return (
       <div>
         <div>
           {Object.entries(demoData.byBlock).map(
             ([blockName, blockData], index) => {
-              const question = assessmentQuestions.find(
-                (b) => b.category?.name === blockName
-              )?.questions?.[0];
-              const answers = question?.answers || [];
-              const hasAnswerCategories =
-                assessmentData?.data?.answerCategories?.length > 0;
-
               return (
                 <div key={index} className="mb-3">
-                  <div className="mb-1 font-medium">{blockName}:</div>
-                  <div className="flex flex-wrap gap-2 ml-4">
+                  <div className="flex flex-wrap gap-0.5 items-center">
+                    <span className="font-medium mr-1.5">{blockName}:</span>
                     {blockData.answers.map((ans, qIndex) => {
                       const answerValue = ans.answerValue;
+                      const isLastQuestion =
+                        qIndex === blockData.answers.length - 1;
+
+                      // Get the specific question for this answer
+                      const currentQuestion = assessmentQuestions
+                        .find((b) => b.category?.name === blockName)
+                        ?.questions?.find((q) => q.id === ans.questionId);
+                      const answers = currentQuestion?.answers || [];
 
                       if (
                         typeof answerValue === "object" &&
                         !Array.isArray(answerValue)
                       ) {
                         return Object.entries(answerValue).map(
-                          ([idx, value]) => {
+                          ([idx, value], entryIndex, array) => {
                             const answer = answers[parseInt(idx)];
                             const hasReverse = answer?.reverse || false;
-                            const categoryName = answer?.category?.name;
-                            const categoryInitials = categoryName
-                              ? categoryName.substring(0, 2)
-                              : null;
+                            const isLastAnswer =
+                              entryIndex === array.length - 1;
+                            const isLast = isLastQuestion && isLastAnswer;
 
                             return (
-                              <div
-                                key={`${qIndex}-${idx}`}
-                                className="inline-flex items-center gap-1"
-                              >
-                                {hasAnswerCategories && categoryInitials && (
-                                  <>
-                                    <span className="bg-blue-100 px-1.5 py-0.5 rounded text-xs font-semibold text-blue-800">
-                                      <span className="font-bold text-main">
-                                        {value}
-                                      </span>
-                                      {categoryInitials}
-                                    </span>
-                                  </>
-                                )}
-
-                                {hasReverse && (
-                                  <svg
-                                    width="12"
-                                    height="12"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    className="text-orange-600"
-                                  >
-                                    <path
-                                      d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"
-                                      stroke="currentColor"
-                                      strokeWidth="2"
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
+                              <React.Fragment key={`${qIndex}-${idx}`}>
+                                <div className="inline-flex items-center gap-1">
+                                  <span className="text-main font-bold">
+                                    {value}
+                                  </span>
+                                  {hasReverse && (
+                                    <SortHorizontalBoldDuotone
+                                      width={14}
+                                      className="text-green-800"
                                     />
-                                  </svg>
+                                  )}
+                                </div>
+                                {!isLast && (
+                                  <span className="text-black font-normal">
+                                    ,
+                                  </span>
                                 )}
-                              </div>
+                              </React.Fragment>
                             );
                           }
                         );
                       } else if (Array.isArray(answerValue)) {
                         return (
-                          <span key={qIndex} className="font-bold text-main">
-                            {answerValue.map((v) => v + 1).join(", ")}
-                          </span>
+                          <React.Fragment key={qIndex}>
+                            <span className="text-main font-bold">
+                              {answerValue.map((v) => v + 1).join(",")}
+                            </span>
+                            {!isLastQuestion && (
+                              <span className="text-black font-normal">,</span>
+                            )}
+                          </React.Fragment>
                         );
                       } else {
                         const answer = answers[0];
                         const hasReverse = answer?.reverse || false;
-                        const categoryName = answer?.category?.name;
-                        const categoryInitials = categoryName
-                          ? categoryName.substring(0, 2).toUpperCase()
-                          : null;
 
                         return (
-                          <div
-                            key={qIndex}
-                            className="inline-flex items-center gap-1"
-                          >
-                            {hasAnswerCategories && categoryInitials && (
-                              <span className="bg-blue-100 px-1.5 py-0.5 rounded text-xs font-semibold text-blue-800">
-                                {categoryInitials}
+                          <React.Fragment key={qIndex}>
+                            <div className="inline-flex items-center gap-1">
+                              <span className="text-main font-bold">
+                                {ans.points}
                               </span>
-                            )}
-                            <span className="font-bold text-main">
-                              {ans.points}
-                            </span>
-                            {hasReverse && (
-                              <svg
-                                width="12"
-                                height="12"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                className="text-orange-600"
-                              >
-                                <path
-                                  d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
+                              {hasReverse && (
+                                <SortHorizontalBoldDuotone
+                                  width={14}
+                                  className="text-green-800"
                                 />
-                              </svg>
+                              )}
+                            </div>
+                            {!isLastQuestion && (
+                              <span className="text-black font-normal">,</span>
                             )}
-                          </div>
+                          </React.Fragment>
                         );
                       }
                     })}
@@ -174,176 +139,103 @@ const FormulaExample = ({
           )}
         </div>
 
-        <Divider className="my-4" />
+        <Divider className="my-6!" />
 
-        {/* Results Section - Simplified based on grouping */}
         <div>
-          <div className="font-semibold mb-3">
-            📁 Үр дүн
-            {(sortEnabled || (limitEnabled && limitValue)) && (
-              <span className="text-xs font-normal text-gray-500 ml-2">
-                {limitEnabled && limitValue && `(Эхний ${limitValue})`}
-                {limitEnabled && limitValue && sortEnabled && " • "}
-                {sortEnabled &&
-                  (sortValue === "true" ? "Өсөхөөр" : "Буурахаар")}
-              </span>
+          <div className="font-semibold mb-3">📁 Үр дүн</div>
+          <div className="font-bold text-gray-500 gap-2 flex items-center mb-3">
+            {limitEnabled && limitValue && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 inline-block text-sm">
+                Эхний {limitValue}
+              </div>
+            )}
+            {sortEnabled && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 inline-block text-sm">
+                {sortValue === "true" ? "Өсөхөөр" : "Буурахаар"}
+              </div>
+            )}
+            {aggregations?.length > 0 && (
+              <div className="bg-blue-100 text-blue-800 rounded-full px-2 py-0.5 inline-block text-sm">
+                {aggregations[0].operation === "avg"
+                  ? "Дундаж"
+                  : aggregations[0].operation === "sum"
+                  ? "Нийлбэр"
+                  : "Тоолох"}
+              </div>
             )}
           </div>
-
-          {aggregations.length > 0 ? (
-            <div className="ml-4">
+          {aggregations.length > 0 && (
+            <div>
               {aggregations.map((agg, aggIndex) => {
                 const operation = agg.operation?.toLowerCase();
-                let operationLabel = "";
-
-                switch (operation) {
-                  case "sum":
-                    operationLabel = "Нийлбэр";
-                    break;
-                  case "avg":
-                    operationLabel = "Дундаж";
-                    break;
-                  case "count":
-                    operationLabel = "Тоо";
-                    break;
-                  default:
-                    operationLabel = operation;
-                }
-
                 return (
                   <div key={aggIndex} className="mb-4">
-                    <div className="font-medium mb-2 text-gray-700">
-                      {operationLabel}:
-                    </div>
-                    <div className="ml-4 space-y-1">
+                    <div className="space-y-1">
                       {formattedResults.aggregated[operation] &&
                         Object.entries(
                           formattedResults.aggregated[operation]
-                        ).map(([groupName, value], index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <span className="text-gray-600">{groupName}:</span>
-                            <span className="font-bold text-main">{value}</span>
-                          </div>
-                        ))}
+                        ).map(([groupName, value], index) => {
+                          // Check if in limit
+                          const limit = limitValue
+                            ? parseInt(limitValue)
+                            : null;
+                          const isInLimit =
+                            !limitEnabled || !limit || index < limit;
+
+                          // Get interval label based on configuration type
+                          let intervalLabel = null;
+                          if (
+                            resultConfig?.type === "single" &&
+                            resultConfig?.intervals
+                          ) {
+                            intervalLabel = getIntervalLabel(
+                              value,
+                              resultConfig.intervals
+                            );
+                          } else if (
+                            resultConfig?.type === "grouped" &&
+                            resultConfig?.groupIntervals
+                          ) {
+                            intervalLabel = getGroupIntervalLabel(
+                              value,
+                              groupName,
+                              resultConfig.groupIntervals
+                            );
+                          }
+
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center gap-2"
+                            >
+                              <div
+                                className={
+                                  isInLimit ? "font-bold" : "font-normal"
+                                }
+                              >
+                                {groupName}:
+                              </div>
+                              <div
+                                className={
+                                  isInLimit
+                                    ? "font-bold text-main"
+                                    : "font-normal text-black"
+                                }
+                              >
+                                {value}
+                                {intervalLabel && (
+                                  <span className="ml-1">
+                                    ({intervalLabel})
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                     </div>
                   </div>
                 );
               })}
-            </div>
-          ) : (
-            <div className="ml-4 text-gray-500 text-sm">
-              Тооцоолол сонгоогүй байна
-            </div>
-          )}
-        </div>
-
-        {/* Additional sections only if enabled */}
-        {filters.length > 0 && filters[0]?.field && (
-          <>
-            <Divider className="my-4" />
-            <div>
-              <div className="font-semibold mb-2">🔍 ШҮҮЛТҮҮР:</div>
-              <div className="ml-4 text-sm space-y-1">
-                {filters.map((filter, index) => (
-                  <div key={index}>
-                    <span className="text-gray-600">Талбар:</span>{" "}
-                    {filter.field}
-                    {" | "}
-                    <span className="text-gray-600">Утга:</span>{" "}
-                    {filter.value?.toString()}
-                  </div>
-                ))}
-              </div>
-              <div className="text-gray-500 text-xs mt-2 ml-4">
-                (Шүүлтүүр нь зөвхөн зөв хариулттай төрлийн тестэд хамаарна)
-              </div>
-            </div>
-          </>
-        )}
-
-        {orderEnabled && orderValue && (
-          <>
-            <Divider className="my-4" />
-            <div>
-              <div className="font-semibold mb-1">🔢 ДАРААЛАЛ:</div>
-              <div className="ml-4 text-sm">{orderValue}</div>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  };
-
-  const calculateTestExample = () => {
-    if (!demoData) return <div>Жишээ үүсгэх боломжгүй байна.</div>;
-
-    return (
-      <div className="space-y-4">
-        <div>
-          <div className="font-semibold mb-2">📝 ТЕСТИЙН ЖИШЭЭ ӨГӨГДӨЛ:</div>
-          <div className="ml-4 text-sm space-y-1">
-            {demoData.byQuestion.map((q, index) => {
-              const correctness = q.answerValue !== undefined ? "зөв" : "буруу";
-              return (
-                <div key={index}>
-                  Асуулт {index + 1}: {q.points} оноо ({correctness})
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <Divider className="my-4" />
-
-        <div>
-          <div className="font-semibold mb-3">
-            📁 Үр дүн
-            {(sortEnabled || (limitEnabled && limitValue)) && (
-              <span className="text-xs font-normal text-gray-500 ml-2">
-                {limitEnabled && limitValue && `(Эхний ${limitValue})`}
-                {limitEnabled && limitValue && sortEnabled && " • "}
-                {sortEnabled &&
-                  (sortValue === "true" ? "Өсөхөөр" : "Буурахаар")}
-              </span>
-            )}
-          </div>
-
-          {aggregations.length > 0 && formattedResults?.aggregated ? (
-            <div className="ml-4">
-              {aggregations.map((agg, aggIndex) => {
-                const operation = agg.operation?.toLowerCase();
-                const label =
-                  operation === "sum"
-                    ? "Нийлбэр"
-                    : operation === "avg"
-                    ? "Дундаж"
-                    : operation === "count"
-                    ? "Тоо"
-                    : operation;
-
-                return (
-                  <div key={aggIndex} className="mb-4">
-                    <div className="font-medium mb-2 text-gray-700">
-                      {label}:
-                    </div>
-                    <div className="ml-4 space-y-1">
-                      {formattedResults.aggregated[operation] &&
-                        Object.entries(
-                          formattedResults.aggregated[operation]
-                        ).map(([group, value], index) => (
-                          <div key={index} className="flex items-center gap-2">
-                            <span className="text-gray-600">{group}:</span>
-                            <span className="font-bold text-main">{value}</span>
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="ml-4 text-gray-500 text-sm">
-              Тооцоолол сонгоогүй байна
             </div>
           )}
         </div>
@@ -351,17 +243,17 @@ const FormulaExample = ({
     );
   };
 
-  const exampleContent =
-    assessmentData?.data?.type === 10
-      ? calculateTestExample()
-      : calculateExample();
+  const exampleContent = calculateExample();
 
   return (
     <Card
       title={
         <div className="justify-between items-center flex">
-          <div>Демо өгөгдөл</div>
-          <div className="text-sm font-normal text-gray-500">
+          <div className="flex items-center gap-2">
+            <ClipboardCheckBoldDuotone width={15} />
+            <span>Демо өгөгдөл</span>
+          </div>
+          <div className="text-sm font-bold text-gray-500">
             {demoData?.byQuestion?.length || 0} асуулт
           </div>
         </div>

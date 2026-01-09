@@ -50,9 +50,6 @@ const generateQuestionDemoValue = (question) => {
     }
 
     case QUESTION_TYPES.CONSTANT_SUM: {
-      // For constant sum, distribute the total points across answers
-      // Each answer can be between minValue and maxValue
-      // The sum of all answers must equal the question's point value
       const min = parseInt(question.minValue) || 0;
       const max = parseInt(question.maxValue) || 10;
       const totalPoints = parseInt(question.point) || 100;
@@ -61,24 +58,13 @@ const generateQuestionDemoValue = (question) => {
       const values = {};
       let remaining = totalPoints;
 
-      // Generate random distribution that respects constraints
       answers.forEach((answer, index) => {
         if (index === answerCount - 1) {
-          // Last answer gets whatever is remaining (clamped to min/max)
           values[index] = Math.max(min, Math.min(max, remaining));
         } else {
-          // For other answers, pick a random value that:
-          // 1. Is between min and max
-          // 2. Leaves enough for remaining answers
           const remainingAnswers = answerCount - index - 1;
-          const maxPossible = Math.min(
-            max,
-            remaining - remainingAnswers * min // Leave at least min for each remaining answer
-          );
-          const minPossible = Math.max(
-            min,
-            remaining - remainingAnswers * max // Don't leave more than max for remaining answers
-          );
+          const maxPossible = Math.min(max, remaining - remainingAnswers * min);
+          const minPossible = Math.max(min, remaining - remainingAnswers * max);
 
           if (maxPossible >= minPossible) {
             const value =
@@ -87,7 +73,6 @@ const generateQuestionDemoValue = (question) => {
             values[index] = value;
             remaining -= value;
           } else {
-            // If no valid range, assign min and adjust
             values[index] = min;
             remaining -= min;
           }
@@ -112,7 +97,6 @@ const calculateQuestionPoints = (question, answerValue) => {
   const min = parseInt(question.minValue) || 0;
   const max = parseInt(question.maxValue) || 10;
 
-  // Helper function to reverse a value
   const reverseValue = (value, shouldReverse) => {
     if (!shouldReverse) return value;
     return min + max - value;
@@ -138,7 +122,6 @@ const calculateQuestionPoints = (question, answerValue) => {
     }
 
     case QUESTION_TYPES.SLIDERSINGLE: {
-      // Check if the first answer has reverse flag
       const shouldReverse = answers[0]?.reverse || false;
       return reverseValue(answerValue, shouldReverse);
     }
@@ -195,7 +178,6 @@ export const generateDemoData = (
     allAnswers: {},
   };
 
-  // Initialize answer category groups if they exist
   if (answerCategories && answerCategories.length > 0) {
     answerCategories.forEach((cat) => {
       demoData.byAnswerCategory[cat.name] = {
@@ -222,7 +204,6 @@ export const generateDemoData = (
       const answerValue = generateQuestionDemoValue(question);
       const points = calculateQuestionPoints(question, answerValue);
 
-      // Store answer
       demoData.allAnswers[question.id] = answerValue;
 
       const questionResult = {
@@ -235,25 +216,20 @@ export const generateDemoData = (
         blockId: blockData.category?.id,
       };
 
-      // Add to block data
       demoData.byBlock[blockName].answers.push(questionResult);
       demoData.byBlock[blockName].totalPoints += points;
 
-      // For SLIDER and CONSTANT_SUM types, distribute points to answer categories
       const type = question.type;
       const answers = question.answers || [];
       const min = parseInt(question.minValue) || 0;
       const max = parseInt(question.maxValue) || 10;
 
-      // Helper function to reverse a value
       const reverseValue = (value, shouldReverse) => {
         if (!shouldReverse) return value;
         return min + max - value;
       };
 
       if (type === QUESTION_TYPES.SLIDER) {
-        // answerValue is like { 0: 3, 1: 4, 2: 2, ... }
-        // Each index corresponds to an answer with a category
         Object.entries(answerValue).forEach(([index, value]) => {
           const answer = answers[parseInt(index)];
           const categoryName = answer?.category?.name;
@@ -266,8 +242,6 @@ export const generateDemoData = (
           }
         });
       } else if (type === QUESTION_TYPES.CONSTANT_SUM) {
-        // answerValue is like { 0: 3, 1: 2, 2: 1, ... }
-        // Each index corresponds to an answer with a category
         Object.entries(answerValue).forEach(([index, value]) => {
           const answer = answers[parseInt(index)];
           const categoryName = answer?.category?.name;
@@ -281,7 +255,6 @@ export const generateDemoData = (
         type === QUESTION_TYPES.SINGLE ||
         type === QUESTION_TYPES.TRUE_FALSE
       ) {
-        // answerValue is an index like 2
         const answer = answers[answerValue];
         const categoryName = answer?.category?.name;
 
@@ -290,7 +263,6 @@ export const generateDemoData = (
           demoData.byAnswerCategory[categoryName].count++;
         }
       } else if (type === QUESTION_TYPES.MULTIPLE) {
-        // answerValue is an array of indices like [0, 2, 3]
         answerValue.forEach((index) => {
           const answer = answers[index];
           const categoryName = answer?.category?.name;
@@ -302,7 +274,6 @@ export const generateDemoData = (
           }
         });
       } else if (type === QUESTION_TYPES.SLIDERSINGLE) {
-        // answerValue is a single value
         const answer = answers[0];
         const categoryName = answer?.category?.name;
         const shouldReverse = answer?.reverse || false;
@@ -312,6 +283,19 @@ export const generateDemoData = (
           demoData.byAnswerCategory[categoryName].points.push(actualValue);
           demoData.byAnswerCategory[categoryName].count++;
         }
+      } else if (type === QUESTION_TYPES.MATRIX) {
+        Object.entries(answerValue).forEach(([rowKey, colIndex]) => {
+          const answer = answers.find((a) => a.value === rowKey);
+          if (answer && answer.matrix?.[colIndex]) {
+            const categoryName = answer.category?.name;
+            const matrixPoint = parseFloat(answer.matrix[colIndex].point) || 0;
+
+            if (categoryName && demoData.byAnswerCategory[categoryName]) {
+              demoData.byAnswerCategory[categoryName].points.push(matrixPoint);
+              demoData.byAnswerCategory[categoryName].count++;
+            }
+          }
+        });
       }
 
       demoData.byQuestion.push(questionResult);
@@ -339,17 +323,12 @@ export const formatDemoResults = (
     aggregated: {},
   };
 
-  // Determine grouping type
   const groupingType = groupByEnabled?.[0] || "none";
 
-  // Group data based on type
   if (groupingType === "questionCategoryId") {
-    // Group by block/question category
-    // For avg calculation, we need ALL individual answer values, not just question totals
     Object.entries(demoData.byBlock).forEach(([blockName, blockData]) => {
       const allAnswerValues = [];
 
-      // Extract all individual answer values from all questions in this block
       blockData.answers.forEach((questionResult) => {
         const answerValue = questionResult.answerValue;
         const question = assessmentQuestions
@@ -359,15 +338,12 @@ export const formatDemoResults = (
         const min = parseInt(question?.minValue) || 0;
         const max = parseInt(question?.maxValue) || 10;
 
-        // Helper to reverse value
         const reverseValue = (value, shouldReverse) => {
           if (!shouldReverse) return value;
           return min + max - value;
         };
 
-        // Extract individual values based on question type
         if (typeof answerValue === "object" && !Array.isArray(answerValue)) {
-          // SLIDER or CONSTANT_SUM: each value is separate
           Object.entries(answerValue).forEach(([idx, value]) => {
             const answer = answers[parseInt(idx)];
             const shouldReverse = answer?.reverse || false;
@@ -375,26 +351,23 @@ export const formatDemoResults = (
             allAnswerValues.push(actualValue);
           });
         } else if (Array.isArray(answerValue)) {
-          // MULTIPLE: count selected answers
           answerValue.forEach((idx) => {
             const answerPoints = parseFloat(answers[idx]?.point) || 0;
             allAnswerValues.push(answerPoints);
           });
         } else {
-          // SINGLE, SLIDERSINGLE, TRUE_FALSE: single value
           allAnswerValues.push(questionResult.points);
         }
       });
 
       results.grouped[blockName] = {
         points: allAnswerValues,
-        count: allAnswerValues.length, // Number of individual answers
-        questionCount: blockData.answers.length, // Number of questions
+        count: allAnswerValues.length,
+        questionCount: blockData.answers.length,
         questions: blockData.answers,
       };
     });
   } else if (groupingType === "answerCategoryId") {
-    // Group by answer category
     Object.entries(demoData.byAnswerCategory).forEach(
       ([categoryName, categoryData]) => {
         if (categoryData.count > 0) {
@@ -407,7 +380,6 @@ export const formatDemoResults = (
       }
     );
   } else {
-    // No grouping - aggregate all questions together
     const allPoints = demoData.byQuestion.map((q) => q.points);
     results.grouped["Нийт"] = {
       points: allPoints,
@@ -416,7 +388,6 @@ export const formatDemoResults = (
     };
   }
 
-  // Apply aggregations
   aggregations.forEach((agg) => {
     const operation = agg.operation?.toLowerCase();
 
@@ -447,37 +418,26 @@ export const formatDemoResults = (
     });
   });
 
-  // Apply sorting and limiting to aggregated results
-  if (sortEnabled || (limitEnabled && limitValue)) {
+  // Sort but DON'T slice - keep ALL data
+  if (sortEnabled) {
     aggregations.forEach((agg) => {
       const operation = agg.operation?.toLowerCase();
 
       if (results.aggregated[operation]) {
-        // Convert to array for sorting
         let entries = Object.entries(results.aggregated[operation]);
 
-        // Sort if enabled
-        if (sortEnabled) {
-          entries.sort((a, b) => {
-            const valueA = parseFloat(a[1]);
-            const valueB = parseFloat(b[1]);
+        entries.sort((a, b) => {
+          const valueA = parseFloat(a[1]);
+          const valueB = parseFloat(b[1]);
 
-            if (sortValue === "true") {
-              // Ascending order (өсөхөөр)
-              return valueA - valueB;
-            } else {
-              // Descending order (буурахаар)
-              return valueB - valueA;
-            }
-          });
-        }
+          if (sortValue === "true") {
+            return valueA - valueB;
+          } else {
+            return valueB - valueA;
+          }
+        });
 
-        // Apply limit if enabled
-        if (limitEnabled && limitValue) {
-          entries = entries.slice(0, parseInt(limitValue));
-        }
-
-        // Convert back to object
+        // Don't slice - keep all entries
         results.aggregated[operation] = Object.fromEntries(entries);
       }
     });
@@ -486,9 +446,198 @@ export const formatDemoResults = (
   return results;
 };
 
+export const calculateMinMaxValues = (
+  assessmentQuestions,
+  groupByEnabled = [],
+  groupName = null,
+  aggregations
+) => {
+  if (!assessmentQuestions || !Array.isArray(assessmentQuestions)) {
+    return { min: 0, max: 100 };
+  }
+
+  let min = 0;
+  let max = 0;
+
+  const groupingType = groupByEnabled?.[0] || "none";
+  const aggregationType = aggregations?.[0]?.operation || "sum";
+
+  let questionsToCalculate = [];
+
+  if (groupName && groupingType === "questionCategoryId") {
+    const block = assessmentQuestions.find(
+      (b) => b.category?.name === groupName
+    );
+    questionsToCalculate = block?.questions || [];
+  } else if (groupName && groupingType === "answerCategoryId") {
+    let totalAnswers = 0;
+    let questionsWithCategory = 0;
+
+    assessmentQuestions.forEach((block) => {
+      (block.questions || []).forEach((question) => {
+        const answers = question.answers || [];
+        const categoryAnswers = answers.filter(
+          (a) => a.category?.name === groupName
+        );
+
+        if (categoryAnswers.length > 0) {
+          questionsWithCategory++;
+          const type = question.type;
+          const minValue = parseInt(question.minValue) || 0;
+          const maxValue = parseInt(question.maxValue) || 10;
+
+          if (type === QUESTION_TYPES.SLIDER) {
+            totalAnswers += categoryAnswers.length;
+            min += categoryAnswers.length * minValue;
+            max += categoryAnswers.length * maxValue;
+          } else if (type === QUESTION_TYPES.SLIDERSINGLE) {
+            totalAnswers += 1;
+            min += minValue;
+            max += maxValue;
+          } else if (type === QUESTION_TYPES.CONSTANT_SUM) {
+            const totalPoints = parseInt(question.point) || 0;
+            const avgPerAnswer = totalPoints / answers.length;
+            totalAnswers += categoryAnswers.length;
+            min += 0;
+            max += Math.ceil(avgPerAnswer * categoryAnswers.length);
+          } else if (
+            type === QUESTION_TYPES.SINGLE ||
+            type === QUESTION_TYPES.TRUE_FALSE
+          ) {
+            totalAnswers += 1;
+            const categoryPoints = categoryAnswers.map(
+              (a) => parseFloat(a.point) || 0
+            );
+            min += 0;
+            max += Math.max(...categoryPoints);
+          } else if (type === QUESTION_TYPES.MULTIPLE) {
+            totalAnswers += categoryAnswers.length;
+            const categoryPoints = categoryAnswers.reduce(
+              (sum, a) => sum + (parseFloat(a.point) || 0),
+              0
+            );
+            min += 0;
+            max += categoryPoints;
+          } else if (type === QUESTION_TYPES.MATRIX) {
+            categoryAnswers.forEach((answer) => {
+              if (answer.matrix && answer.matrix.length > 0) {
+                totalAnswers += 1;
+                const matrixPoints = answer.matrix.map(
+                  (m) => parseFloat(m.point) || 0
+                );
+                min += Math.min(...matrixPoints);
+                max += Math.max(...matrixPoints);
+              }
+            });
+          } else {
+            const totalPoints = parseInt(question.point) || 0;
+            const avgPerAnswer = totalPoints / answers.length;
+            totalAnswers += categoryAnswers.length;
+            min += 0;
+            max += Math.ceil(avgPerAnswer * categoryAnswers.length);
+          }
+        }
+      });
+    });
+
+    if (aggregationType === "avg" && totalAnswers > 0) {
+      min = min / totalAnswers;
+      max = max / totalAnswers;
+    } else if (aggregationType === "count") {
+      min = 0;
+      max = questionsWithCategory;
+    }
+
+    return { min: Math.floor(min), max: Math.ceil(max) };
+  } else {
+    assessmentQuestions.forEach((block) => {
+      questionsToCalculate.push(...(block.questions || []));
+    });
+  }
+
+  let totalAnswers = 0;
+
+  questionsToCalculate.forEach((question) => {
+    const type = question.type;
+    const answers = question.answers || [];
+    const minValue = parseInt(question.minValue) || 0;
+    const maxValue = parseInt(question.maxValue) || 10;
+
+    switch (type) {
+      case QUESTION_TYPES.SLIDERSINGLE:
+        totalAnswers += 1;
+        min += minValue;
+        max += maxValue;
+        break;
+
+      case QUESTION_TYPES.SLIDER:
+        totalAnswers += answers.length;
+        min += answers.length * minValue;
+        max += answers.length * maxValue;
+        break;
+
+      case QUESTION_TYPES.CONSTANT_SUM:
+        const totalPoints = parseInt(question.point) || 0;
+        totalAnswers += answers.length;
+        min += 0;
+        max += totalPoints;
+        break;
+
+      case QUESTION_TYPES.SINGLE:
+      case QUESTION_TYPES.TRUE_FALSE:
+        if (answers.length > 0) {
+          totalAnswers += 1;
+          const points = answers.map((a) => parseFloat(a.point) || 0);
+          min += Math.min(...points);
+          max += Math.max(...points);
+        }
+        break;
+
+      case QUESTION_TYPES.MULTIPLE:
+        if (answers.length > 0) {
+          totalAnswers += answers.length;
+          const allPoints = answers.reduce(
+            (sum, a) => sum + (parseFloat(a.point) || 0),
+            0
+          );
+          min += 0;
+          max += allPoints;
+        }
+        break;
+
+      case QUESTION_TYPES.MATRIX:
+        answers.forEach((answer) => {
+          if (answer.matrix && answer.matrix.length > 0) {
+            totalAnswers += 1;
+            const matrixPoints = answer.matrix.map(
+              (m) => parseFloat(m.point) || 0
+            );
+            min += Math.min(...matrixPoints);
+            max += Math.max(...matrixPoints);
+          }
+        });
+        break;
+
+      default:
+        break;
+    }
+  });
+
+  if (aggregationType === "avg" && totalAnswers > 0) {
+    min = min / totalAnswers;
+    max = max / totalAnswers;
+  } else if (aggregationType === "count") {
+    min = 0;
+    max = totalAnswers;
+  }
+
+  return { min: Math.floor(min), max: Math.ceil(max) };
+};
+
 export default {
   generateDemoData,
   formatDemoResults,
+  calculateMinMaxValues,
   generateQuestionDemoValue,
   calculateQuestionPoints,
   QUESTION_TYPES,
